@@ -41,6 +41,7 @@ public:
     void stop();
 
     DesktronicOperation current_operation = DESKTRONIC_OPERATION_IDLE;
+    std::string test_str = "";
 
 protected:
     sensor::Sensor* height_sensor_ = nullptr;

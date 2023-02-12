@@ -1,0 +1,80 @@
+defaults:
+  checks_failure_payload: &checks_failure_payload
+    title: 'Mergeable Run have been Completed!'
+    summary: |
+      ### Status: {{toUpperCase validationStatus}}
+          Here are some stats of the run:
+          {{validationCount}} validations were ran.
+          {{passCount}} PASSED
+          {{failCount}} FAILED
+    text: "{{#each validationSuites}}\n
+          #### {{{statusIcon status}}} Validator: {{toUpperCase name}}\n
+          {{#each validations }} * {{{statusIcon status}}} ***{{{ description }}}***\n
+                  Input : {{{details.input}}}\n
+                  Settings : {{{displaySettings details.settings}}}\n
+                  {{/each}}\n
+          {{/each}}"
+
+version: 2
+mergeable:
+  - when: pull_request.opened
+    name: 'Greet Contributor and assign Pull-Request'
+    validate: []
+    pass:
+      - do: comment
+        message: Thank you for creating a Pull-Request. 🐔
+      - do: assign
+        assignees: [ '@author' ]
+  - when: pull_request.*
+    name: 'Validate pushing by mistake'
+    validate:
+      - do: title
+        must_exclude:
+          regex: ^\[WIP\]
+      - do: label
+        must_exclude:
+          regex: wip
+    fail:
+      - do: checks
+        status: 'failure'
+        payload: *checks_failure_payload
+      - do: comment
+        payload:
+          body: >
+            You've propably pushed by mistake.
+  - when: pull_request.*
+    name: 'Validate Pull-Request description'
+    validate:
+      - do: description
+        no_empty:
+          enabled: true
+    fail:
+      - do: checks
+        status: 'failure'
+        payload: *checks_failure_payload
+      - do: comment
+        payload:
+          body: >
+            Description matter and should not be empty. Provide detail with **what** was changed, **why** it was changed, and **how** it was changed.
+  - when: pull_request.*, pull_request_review.*
+    name: 'Validate dependencies'
+    validate:
+      - do: dependent
+        changed:
+          file: 'package.json'
+          required: ['package-lock.json']
+  - when: pull_request.*, pull_request_review.*
+    name: 'Validate commit-conventions'
+    validate:
+      - do: title
+        no_empty:
+          enabled: true
+          message: Please fill the title.
+      - do: title
+        must_include:
+          regex: ^(feat|docs|chore|fix|refactor|test|style|perf)(\(\w+\))?\/.+$
+          message: Semantic release conventions must be followed.
+      - do: commit
+        message:
+          regex: ^(feat|docs|chore|fix|refactor|test|style|perf)(\(\w+\))?:.+$
+          message: Semantic release conventions must be followed.

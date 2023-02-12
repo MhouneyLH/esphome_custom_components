@@ -24,20 +24,21 @@ class Desktronic : public Component
     , public uart::UARTDevice
 {
 public:
+    virtual float get_setup_priority() const override { return esphome::setup_priority::LATE; }
     virtual void setup() override;
     virtual void loop() override;
     void setLogConfig();
 
-    void moveToPosition(const int targetPosition);
-    void stop();
-
 public:
-    void setHeightSensor(sensor::Sensor* sensor) { m_heightSensor = sensor; }
-    void setUpPin(GPIOPin* pin) { m_upPin = pin; }
-    void setDownPin(GPIOPin* pin) { m_downPin = pin; }
-    void setRequestPin(GPIOPin* pin) { m_requestPin = pin; }
-    void setStoppingDistance(const int distance) { m_stoppingDistance = distance; }
-    void setTimeout(const int timeout) { m_timeout = timeout; }
+    void set_height_sensor(sensor::Sensor* sensor) { m_heightSensor = sensor; }
+    void set_up_pin(GPIOPin* pin) { m_upPin = pin; }
+    void set_down_pin(GPIOPin* pin) { m_downPin = pin; }
+    void set_request_pin(GPIOPin* pin) { m_requestPin = pin; }
+    void set_stopping_distance(const int distance) { m_stoppingDistance = distance; }
+    void set_timeout(const int timeout) { m_timeout = timeout; }
+
+    void move_to_position(const int targetPosition);
+    void stop();
 
 protected:
     DesktronicOperation m_currentOperation = DESKTRONIC_OPERATION_IDLE;

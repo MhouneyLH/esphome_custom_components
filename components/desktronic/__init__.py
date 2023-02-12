@@ -34,19 +34,19 @@ async def to_code(config):
 
     if CONF_UP in config:
         pin = await codegen.gpio_pin_expression(config[CONF_UP])
-        codegen.add(var.setUpPin(pin))
+        codegen.add(var.set_up_pin(pin))
     if CONF_DOWN in config:
         pin = await codegen.gpio_pin_expression(config[CONF_DOWN])
-        codegen.add(var.setDownPinpin))
+        codegen.add(var.set_down_pinpin))
     if CONF_REQUEST in config:
         pin = await codegen.gpio_pin_expression(config[CONF_REQUEST])
-        codegen.add(var.setRequestPin(pin))
+        codegen.add(var.set_request_pin(pin))
     if CONF_HEIGHT in config:
         sensor = await sensor.new_sensor(config[CONF_HEIGHT])
-        codegen.add(var.setHeightSensor(sensor))
+        codegen.add(var.set_height_sensor(sensor))
 
     # don't have to check if it's in config, because it has a default value
     codegen.add(var.set_stopping_distance(config[CONF_STOPPING_DISTANCE]))
-    
+
     if CONF_TIMEOUT in config:
-        codegen.add(var.setTimeout(config[CONF_TIMEOUT].total_milliseconds))
+        codegen.add(var.set_timeout(config[CONF_TIMEOUT].total_milliseconds))

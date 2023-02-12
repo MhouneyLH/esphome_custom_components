@@ -118,7 +118,7 @@ void Desktronic::setLogConfig()
     LOG_PIN("RequestPin: ", m_requestPin);
 }
 
-void Desktronic::moveToPosition(const int targetPosition)
+void Desktronic::move_to_position(const int targetPosition)
 {
     if (abs(targetPosition - m_currentPosition) < m_stoppingDistance)
     {

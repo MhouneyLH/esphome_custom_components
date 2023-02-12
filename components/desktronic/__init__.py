@@ -28,6 +28,8 @@ CONFIG_SCHEMA = config_validation.COMPONENT_SCHEMA.extend({
 }).extend(uart.UART_DEVICE_SCHEMA)
 
 async def to_code(config):
+    global sensor
+
     var = codegen.new_Pvariable(config[CONF_ID])
     await codegen.register_component(var, config)
     await uart.register_uart_device(var, config)

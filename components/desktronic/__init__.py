@@ -28,25 +28,25 @@ CONFIG_SCHEMA = config_validation.COMPONENT_SCHEMA.extend({
 }).extend(uart.UART_DEVICE_SCHEMA)
 
 async def to_code(config):
-        var = codegen.new_Pvariable(config[CONF_ID])
-        await codegen.register_component(var, config)
-        await uart.register_uart_device(var, config)
+    var = codegen.new_Pvariable(config[CONF_ID])
+    await codegen.register_component(var, config)
+    await uart.register_uart_device(var, config)
 
-        if CONF_UP in config:
-            pin = await codegen.gpio_pin_expression(config[CONF_UP])
-            codegen.add(var.set_up_pin(pin))
-        if CONF_DOWN in config:
-            pin = await codegen.gpio_pin_expression(config[CONF_DOWN])
-            codegen.add(var.set_down_pin(pin))
-        if CONF_REQUEST in config:
-            pin = await codegen.gpio_pin_expression(config[CONF_REQUEST])
-            codegen.add(var.set_request_pin(pin))
-        if CONF_HEIGHT in config:
-            sens = await sensor.new_sensor(config[CONF_HEIGHT])
-            codegen.add(var.set_height_sensor(sens))
+    if CONF_UP in config:
+        pin = await codegen.gpio_pin_expression(config[CONF_UP])
+        codegen.add(var.setUpPin(pin))
+    if CONF_DOWN in config:
+        pin = await codegen.gpio_pin_expression(config[CONF_DOWN])
+        codegen.add(var.setDownPinpin))
+    if CONF_REQUEST in config:
+        pin = await codegen.gpio_pin_expression(config[CONF_REQUEST])
+        codegen.add(var.setRequestPin(pin))
+    if CONF_HEIGHT in config:
+        sensor = await sensor.new_sensor(config[CONF_HEIGHT])
+        codegen.add(var.setHeightSensor(sensor))
 
-        # don't have to check if it's in config, because it has a default value
-        codegen.add(var.set_stopping_distance(config[CONF_STOPPING_DISTANCE]))
-
-        if CONF_TIMEOUT in config:
-            codegen.add(var.set_timeout(config[CONF_TIMEOUT].total_milliseconds))
+    # don't have to check if it's in config, because it has a default value
+    codegen.add(var.set_stopping_distance(config[CONF_STOPPING_DISTANCE]))
+    
+    if CONF_TIMEOUT in config:
+        codegen.add(var.setTimeout(config[CONF_TIMEOUT].total_milliseconds))

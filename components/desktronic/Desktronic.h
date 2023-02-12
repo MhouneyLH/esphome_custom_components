@@ -17,6 +17,8 @@ enum DesktronicOperation : uint8_t
     DESKTRONIC_OPERATION_LOWERING,
 };
 
+const char* desktronicOperationToString(const DesktronicOperation operation);
+
 class Desktronic : public Component
     , public sensor::Sensor
     , public uart::UARTDevice
@@ -24,9 +26,9 @@ class Desktronic : public Component
 public:
     virtual void setup() override;
     virtual void loop() override;
-    void dumpConfig();
+    void setLogConfig();
 
-    void moveToHeight(const int height);
+    void moveToPosition(const int targetPosition);
     void stop();
 
 public:
@@ -34,8 +36,8 @@ public:
     void setUpPin(GPIOPin* pin) { m_upPin = pin; }
     void setDownPin(GPIOPin* pin) { m_downPin = pin; }
     void setRequestPin(GPIOPin* pin) { m_requestPin = pin; }
-    void setStoppingDistance(int distance) { m_stoppingDistance = distance; }
-    void setTimeout(int timeout) { m_timeout = timeout; }
+    void setStoppingDistance(const int distance) { m_stoppingDistance = distance; }
+    void setTimeout(const int timeout) { m_timeout = timeout; }
 
 protected:
     DesktronicOperation m_currentOperation = DESKTRONIC_OPERATION_IDLE;
@@ -46,8 +48,8 @@ protected:
     GPIOPin* m_requestPin = nullptr;
 
     int m_stoppingDistance;
-    int m_currentHeight = 0;
-    int m_targetHeight = -1;
+    int m_currentPosition = 0;
+    int m_targetPosition = -1;
     int m_timeout = -1;
 
     uint64_t m_startTime = 0;

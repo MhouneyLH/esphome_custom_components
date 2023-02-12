@@ -30,31 +30,31 @@ public:
     void setLogConfig();
 
 public:
-    void set_height_sensor(sensor::Sensor* sensor) { m_heightSensor = sensor; }
-    void set_up_pin(GPIOPin* pin) { m_upPin = pin; }
-    void set_down_pin(GPIOPin* pin) { m_downPin = pin; }
-    void set_request_pin(GPIOPin* pin) { m_requestPin = pin; }
-    void set_stopping_distance(const int distance) { m_stoppingDistance = distance; }
-    void set_timeout(const int timeout) { m_timeout = timeout; }
+    void set_height_sensor(sensor::Sensor* sensor) { height_sensor_ = sensor; }
+    void set_up_pin(GPIOPin* pin) { up_pin_ = pin; }
+    void set_down_pin(GPIOPin* pin) { down_pin_ = pin; }
+    void set_request_pin(GPIOPin* pin) { request_pin_ = pin; }
+    void set_stopping_distance(const int distance) { stopping_distance_ = distance; }
+    void set_timeout(const int timeout) { timeout_ = timeout; }
 
     void move_to_position(const int targetPosition);
     void stop();
 
+    DesktronicOperation current_operation = DESKTRONIC_OPERATION_IDLE;
+
 protected:
-    DesktronicOperation m_currentOperation = DESKTRONIC_OPERATION_IDLE;
+    sensor::Sensor* height_sensor_ = nullptr;
+    GPIOPin* up_pin_ = nullptr;
+    GPIOPin* down_pin_ = nullptr;
+    GPIOPin* request_pin_ = nullptr;
 
-    sensor::Sensor* m_heightSensor = nullptr;
-    GPIOPin* m_upPin = nullptr;
-    GPIOPin* m_downPin = nullptr;
-    GPIOPin* m_requestPin = nullptr;
+    int stopping_distance_;
+    int current_pos_ = 0;
+    int target_pos_ = -1;
+    int timeout_ = -1;
 
-    int m_stoppingDistance;
-    int m_currentPosition = 0;
-    int m_targetPosition = -1;
-    int m_timeout = -1;
-
-    uint64_t m_startTime = 0;
-    uint64_t m_requestTime = 0;
+    uint64_t start_time_ = 0;
+    uint64_t request_time_ = 0;
 };
 
 } // namespace desktronic

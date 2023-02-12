@@ -37,7 +37,7 @@ async def to_code(config):
         codegen.add(var.set_up_pin(pin))
     if CONF_DOWN in config:
         pin = await codegen.gpio_pin_expression(config[CONF_DOWN])
-        codegen.add(var.set_down_pinpin))
+        codegen.add(var.set_down_pin(pin))
     if CONF_REQUEST in config:
         pin = await codegen.gpio_pin_expression(config[CONF_REQUEST])
         codegen.add(var.set_request_pin(pin))

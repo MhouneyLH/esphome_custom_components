@@ -25,20 +25,20 @@ const char* desktronicOperationToString(const DesktronicOperation operation)
 
 void Desktronic::setup()
 {
-    if (m_upPin != nullptr)
+    if (up_pin_ != nullptr)
     {
-        m_upPin->digital_write(false);
+        up_pin_->digital_write(false);
     }
 
-    if (m_downPin != nullptr)
+    if (down_pin_ != nullptr)
     {
-        m_downPin->digital_write(false);
+        down_pin_->digital_write(false);
     }
 
-    if (m_requestPin != nullptr)
+    if (request_pin_ != nullptr)
     {
-        m_requestPin->digital_write(true);
-        m_requestTime = esphome::millis();
+        request_pin_->digital_write(true);
+        request_time_ = esphome::millis();
     }
 }
 
@@ -80,11 +80,11 @@ void Desktronic::loop()
             break;
         case 3:
             value = (high_byte << 8) + readByte;
-            m_currentPosition = value;
+            current_pos_ = value;
 
-            if (m_heightSensor != nullptr)
+            if (height_sensor_ != nullptr)
             {
-                m_heightSensor->publish_state(value);
+                height_sensor_->publish_state(value);
             }
 
             state = 0;
@@ -92,19 +92,19 @@ void Desktronic::loop()
         }
     }
 
-    if (m_targetPosition >= 0)
+    if (target_pos_ >= 0)
     {
-        if ((abs(m_targetPosition - m_currentPosition) < m_stoppingDistance) ||
-            ((m_timeout >= 0) && (millis() - m_startTime >= m_timeout)))
+        if ((abs(target_pos_ - current_pos_) < stopping_distance_) ||
+            ((timeout_ >= 0) && (millis() - start_time_ >= timeout_)))
         {
             stop();
         }
     }
 
-    if ((m_requestTime > 0) && (millis() - m_requestTime >= 100))
+    if ((request_time_ > 0) && (millis() - request_time_ >= 100))
     {
-        m_requestPin->digital_write(false);
-        m_requestTime = 0;
+        request_pin_->digital_write(false);
+        request_time_ = 0;
     }
 }
 
@@ -112,63 +112,63 @@ void Desktronic::setLogConfig()
 {
     ESP_LOGCONFIG(TAG, "DesktronicDesk:");
 
-    LOG_SENSOR("", "Height", m_heightSensor);
-    LOG_PIN("UpPin: ", m_upPin);
-    LOG_PIN("DownPin: ", m_downPin);
-    LOG_PIN("RequestPin: ", m_requestPin);
+    LOG_SENSOR("", "Height", height_sensor_);
+    LOG_PIN("UpPin: ", up_pin_);
+    LOG_PIN("DownPin: ", down_pin_);
+    LOG_PIN("RequestPin: ", request_pin_);
 }
 
 void Desktronic::move_to_position(const int targetPosition)
 {
-    if (abs(targetPosition - m_currentPosition) < m_stoppingDistance)
+    if (abs(targetPosition - current_pos_) < stopping_distance_)
     {
         return;
     }
 
-    if (targetPosition > m_currentPosition)
+    if (targetPosition > current_pos_)
     {
-        if (m_upPin == nullptr)
+        if (up_pin_ == nullptr)
         {
             return;
         }
 
-        m_upPin->digital_write(true);
-        m_currentOperation = DESKTRONIC_OPERATION_RAISING;
+        up_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_RAISING;
     }
     else
     {
-        if (m_downPin == nullptr)
+        if (down_pin_ == nullptr)
         {
             return;
         }
 
-        m_downPin->digital_write(true);
-        m_currentOperation = DESKTRONIC_OPERATION_LOWERING;
+        down_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_LOWERING;
     }
 
-    m_targetPosition = targetPosition;
+    target_pos_ = targetPosition;
 
-    if (m_timeout >= 0)
+    if (timeout_ >= 0)
     {
-        m_startTime = esphome::millis();
+        start_time_ = esphome::millis();
     }
 }
 
 void Desktronic::stop()
 {
-    m_targetPosition = -1;
+    target_pos_ = -1;
 
-    if (m_upPin != nullptr)
+    if (up_pin_ != nullptr)
     {
-        m_upPin->digital_write(false);
+        up_pin_->digital_write(false);
     }
 
-    if (m_downPin != nullptr)
+    if (down_pin_ != nullptr)
     {
-        m_downPin->digital_write(false);
+        down_pin_->digital_write(false);
     }
 
-    m_currentOperation = DESKTRONIC_OPERATION_IDLE;
+    current_operation = DESKTRONIC_OPERATION_IDLE;
 }
 
 } // namespace desktronic

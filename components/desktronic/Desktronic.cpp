@@ -42,6 +42,81 @@ void Desktronic::setup()
     }
 }
 
+int Desktronic::get_tens_digit(const uint8_t byte)
+{
+    switch (byte)
+    {
+    case Tens::TENS_70:
+        return 70;
+    case Tens::TENS_80:
+        return 80;
+    case Tens::TENS_90:
+        return 90;
+    case Tens::TENS_100:
+        return 100;
+    default:
+        return -1;
+    }
+}
+
+int Desktronic::get_units_digit(const uint8_t byte)
+{
+    switch (byte)
+    {
+    case Units::UNITS_0:
+        return 0;
+    case Units::UNITS_1:
+        return 1;
+    case Units::UNITS_2:
+        return 2;
+    case Units::UNITS_3:
+        return 3;
+    case Units::UNITS_4:
+        return 4;
+    case Units::UNITS_5:
+        return 5;
+    case Units::UNITS_6:
+        return 6;
+    case Units::UNITS_7:
+        return 7;
+    case Units::UNITS_8:
+        return 8;
+    case Units::UNITS_9:
+        return 9;
+    default:
+        return -1;
+    }
+}
+
+double Desktronic::get_first_decimal_digit(const uint8_t byte)
+{
+    switch (byte)
+    {
+    case FirstDecimal::DECIMAL_0:
+        return 0.0;
+    case FirstDecimal::DECIMAL_1:
+        return 0.1;
+    case FirstDecimal::DECIMAL_2:
+        return 0.2;
+    case FirstDecimal::DECIMAL_3:
+        return 0.3;
+    case FirstDecimal::DECIMAL_4:
+        return 0.4;
+    case FirstDecimal::DECIMAL_5:
+        return 0.5;
+    case FirstDecimal::DECIMAL_6:
+        return 0.6;
+    case FirstDecimal::DECIMAL_7:
+        return 0.7;
+    case FirstDecimal::DECIMAL_8:
+        return 0.8;
+    case FirstDecimal::DECIMAL_9:
+        return 0.9;
+    default:
+        return -1.0;
+    }
+}
+
 void Desktronic::loop()
 {
     static int state = 0;
@@ -67,8 +142,6 @@ void Desktronic::loop()
             }
         }
 
-        ESP_LOGI(TAG, "Byte %d: 0x%x", state, byte);
-
         switch (state)
         {
         case 0:
@@ -76,103 +149,20 @@ void Desktronic::loop()
             break;
         case 1:
             state = 2;
-            switch (byte)
-            {
-            case Tens::TENS_70:
-                height = 70;
-                break;
-            case Tens::TENS_80:
-                height = 80;
-                break;
-            case Tens::TENS_90:
-                height = 90;
-                break;
-            case Tens::TENS_100:
-                height = 100;
-                break;
-            default:
-                break;
-            }
+            height += get_tens_digit(byte);
             break;
         case 2:
             state = 3;
-            switch (byte)
-            {
-            case Units::UNITS_0:
-                break;
-            case Units::UNITS_1:
-                height += 1;
-                break;
-            case Units::UNITS_2:
-                height += 2;
-                break;
-            case Units::UNITS_3:
-                height += 3;
-                break;
-            case Units::UNITS_4:
-                height += 4;
-                break;
-            case Units::UNITS_5:
-                height += 5;
-                break;
-            case Units::UNITS_6:
-                height += 6;
-                break;
-            case Units::UNITS_7:
-                height += 7;
-                break;
-            case Units::UNITS_8:
-                height += 8;
-                break;
-            case Units::UNITS_9:
-                height += 9;
-                break;
-            default:
-                break;
-            }
+            height += get_units_digit(byte);
             break;
         case 3:
             state = 4;
-            switch (byte)
-            {
-            case FirstDecimal::DECIMAL_0:
-                break;
-            case FirstDecimal::DECIMAL_1:
-                height += 0.1;
-                break;
-            case FirstDecimal::DECIMAL_2:
-                height += 0.2;
-                break;
-            case FirstDecimal::DECIMAL_3:
-                height += 0.3;
-                break;
-            case FirstDecimal::DECIMAL_4:
-                height += 0.4;
-                break;
-            case FirstDecimal::DECIMAL_5:
-                height += 0.5;
-                break;
-            case FirstDecimal::DECIMAL_6:
-                height += 0.6;
-                break;
-            case FirstDecimal::DECIMAL_7:
-                height += 0.7;
-                break;
-            case FirstDecimal::DECIMAL_8:
-                height += 0.8;
-                break;
-            case FirstDecimal::DECIMAL_9:
-                height += 0.9;
-                break;
-            default:
-                break;
-            }
+            height += get_first_decimal_digit(byte);
             break;
         case 4:
             state = 5;
             break;
         case 5:
-            ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
             ESP_LOGI(TAG, "Current Height: %f", height);
 
             state = 0;

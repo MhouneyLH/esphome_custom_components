@@ -40,19 +40,19 @@ enum Units : uint8_t
     UNITS_9 = 0xEF,
 };
 
-// enum FirstDecimal : uint8_t
-// {
-//     DECIMAL_0 = 0x3F,
-//     DECIMAL_1 = 0x06,
-//     DECIMAL_2 = 0x5B,
-//     DECIMAL_3 = 0x4F,
-//     DECIMAL_4 = 0x66,
-//     DECIMAL_5 = 0x6D,
-//     DECIMAL_6 = 0x7D,
-//     DECIMAL_7 = 0x07,
-//     DECIMAL_8 = 0x7F,
-//     DECIMAL_9 = 0x6F,
-// };
+enum FirstDecimal : uint8_t
+{
+    DECIMAL_0 = 0x3F,
+    DECIMAL_1 = 0x06,
+    DECIMAL_2 = 0x5B,
+    DECIMAL_3 = 0x4F,
+    DECIMAL_4 = 0x66,
+    DECIMAL_5 = 0x6D,
+    DECIMAL_6 = 0x7D,
+    DECIMAL_7 = 0x07,
+    DECIMAL_8 = 0x7F,
+    DECIMAL_9 = 0x6F,
+};
 
 // enum Id : uint8_t
 // {

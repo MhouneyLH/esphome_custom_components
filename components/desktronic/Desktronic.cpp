@@ -46,11 +46,25 @@ void Desktronic::loop()
 {
     static int state = 0;
     static int height = 0;
+    bool skipGarbage = true;
 
     while (esphome::uart::UARTDevice::available())
     {
         uint8_t byte;
         esphome::uart::UARTDevice::read_byte(&byte);
+
+        if (skipGarbage)
+        {
+            if (byte == 0x5A)
+            {
+                skipGarbage = false;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
         ESP_LOGI(TAG, "Byte %d: 0x%x", state, byte);
 
         switch (state)

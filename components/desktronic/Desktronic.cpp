@@ -161,14 +161,25 @@ void Desktronic::loop()
 {
     static int bytePositionInUARTMessage = 0;
     static double height = 0.0;
+    bool beginning_skipping_garbage_bytes = true;
 
     while (esphome::uart::UARTDevice::available())
     {
         uint8_t byte;
         esphome::uart::UARTDevice::read_byte(&byte);
-        if (is_skipping_garbage_byte(byte))
+
+        if (beginning_skipping_garbage_bytes)
         {
-            continue;
+            if (is_skipping_garbage_byte(byte))
+            {
+                continue;
+            }
+            else
+            {
+                beginning_skipping_garbage_bytes = false;
+                bytePositionInUARTMessage = 0;
+                height = 0.0;
+            }
         }
 
         handle_byte(byte, bytePositionInUARTMessage, height);

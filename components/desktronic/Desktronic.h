@@ -396,8 +396,8 @@ protected:
     GPIOPin* request_pin_ = nullptr;
 
     int stopping_distance_;
-    int current_pos_ = 0;
-    int target_pos_ = -1;
+    double current_pos_ = 0.0;
+    double target_pos_ = -1.0;
     int timeout_ = -1;
 
     uint64_t start_time_ = 0;

@@ -147,6 +147,11 @@ void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& heig
         break;
     case 5:
         ESP_LOGI(TAG, "Current Height: %f", height);
+        current_pos_ = height;
+        if (height_sensor_)
+        {
+            height_sensor_->publish_state(height);
+        }
 
         bytePosition = 0;
         height = 0.0;

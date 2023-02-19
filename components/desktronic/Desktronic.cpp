@@ -53,7 +53,7 @@ void Desktronic::loop()
         int value;
 
         esphome::uart::UARTDevice::read_byte(&readByte);
-        ESP_LOGI(TAG, "Received byte: %d", readByte);
+        ESP_LOGI(TAG, "Received byte: 0x%x", readByte);
 
         //     switch (state)
         //     {

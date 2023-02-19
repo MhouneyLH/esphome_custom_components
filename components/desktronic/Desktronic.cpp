@@ -51,6 +51,7 @@ void Desktronic::loop()
     {
         uint8_t byte;
         esphome::uart::UARTDevice::read_byte(&byte);
+        ESP_LOGI(TAG, "Byte %d: 0x%x", state, byte);
 
         switch (state)
         {
@@ -122,7 +123,7 @@ void Desktronic::loop()
             break;
         case 5:
             ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
-            ESP_LOGI(TAG, "Current Ten Height: %d", height);
+            ESP_LOGI(TAG, "Current Height: %d", height);
 
             state = 0;
             height = 0;

@@ -7,6 +7,7 @@ namespace desktronic
 {
 
 static const char* TAG = "desktronic";
+static const unsigned int UART_MESSAGE_LENGTH = 6U;
 
 const char* desktronicOperationToString(const DesktronicOperation operation)
 {
@@ -117,61 +118,60 @@ double Desktronic::get_first_decimal_digit(const uint8_t byte)
     }
 }
 
+bool Desktronic::is_skipping_garbage_byte(const uint8_t byte)
+{
+    return byte != 0x5A;
+}
+
+void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& height)
+{
+    switch (bytePosition)
+    {
+    case 0:
+        bytePosition = 1;
+        break;
+    case 1:
+        height += get_tens_digit(byte);
+        bytePosition = 2;
+        break;
+    case 2:
+        height += get_units_digit(byte);
+        bytePosition = 3;
+        break;
+    case 3:
+        height += get_first_decimal_digit(byte);
+        bytePosition = 4;
+        break;
+    case 4:
+        bytePosition = 5;
+        break;
+    case 5:
+        ESP_LOGI(TAG, "Current Height: %f", height);
+
+        bytePosition = 0;
+        height = 0.0;
+
+        break;
+    default:
+        break;
+    }
+}
+
 void Desktronic::loop()
 {
-    static int state = 0;
+    static int bytePositionInUARTMessage = 0;
     static double height = 0.0;
-    bool skipGarbage = true;
 
     while (esphome::uart::UARTDevice::available())
     {
         uint8_t byte;
         esphome::uart::UARTDevice::read_byte(&byte);
-
-        if (skipGarbage)
+        if (is_skipping_garbage_byte(byte))
         {
-            if (byte == 0x5A)
-            {
-                state = 0;
-                height = 0;
-                skipGarbage = false;
-            }
-            else
-            {
-                continue;
-            }
+            continue;
         }
 
-        switch (state)
-        {
-        case 0:
-            state = 1;
-            break;
-        case 1:
-            state = 2;
-            height += get_tens_digit(byte);
-            break;
-        case 2:
-            state = 3;
-            height += get_units_digit(byte);
-            break;
-        case 3:
-            state = 4;
-            height += get_first_decimal_digit(byte);
-            break;
-        case 4:
-            state = 5;
-            break;
-        case 5:
-            ESP_LOGI(TAG, "Current Height: %f", height);
-
-            state = 0;
-            height = 0.0;
-
-            break;
-        default:
-            break;
-        }
+        handle_byte(byte, bytePositionInUARTMessage, height);
     }
 }
 

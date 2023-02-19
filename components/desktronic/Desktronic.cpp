@@ -45,7 +45,7 @@ void Desktronic::setup()
 void Desktronic::loop()
 {
     static int state = 0;
-    static int height = 0;
+    static double height = 0.0;
     bool skipGarbage = true;
 
     while (esphome::uart::UARTDevice::available())
@@ -133,16 +133,50 @@ void Desktronic::loop()
             break;
         case 3:
             state = 4;
+            switch (byte)
+            {
+            case FirstDecimal::DECIMAL_0:
+                break;
+            case FirstDecimal::DECIMAL_1:
+                height += 0.1;
+                break;
+            case FirstDecimal::DECIMAL_2:
+                height += 0.2;
+                break;
+            case FirstDecimal::DECIMAL_3:
+                height += 0.3;
+                break;
+            case FirstDecimal::DECIMAL_4:
+                height += 0.4;
+                break;
+            case FirstDecimal::DECIMAL_5:
+                height += 0.5;
+                break;
+            case FirstDecimal::DECIMAL_6:
+                height += 0.6;
+                break;
+            case FirstDecimal::DECIMAL_7:
+                height += 0.7;
+                break;
+            case FirstDecimal::DECIMAL_8:
+                height += 0.8;
+                break;
+            case FirstDecimal::DECIMAL_9:
+                height += 0.9;
+                break;
+            default:
+                break;
+            }
             break;
         case 4:
             state = 5;
             break;
         case 5:
             ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
-            ESP_LOGI(TAG, "Current Height: %d", height);
+            ESP_LOGI(TAG, "Current Height: %f", height);
 
             state = 0;
-            height = 0;
+            height = 0.0;
 
             break;
         default:

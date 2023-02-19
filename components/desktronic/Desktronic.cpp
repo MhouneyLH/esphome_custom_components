@@ -45,7 +45,7 @@ void Desktronic::setup()
 void Desktronic::loop()
 {
     static int state = 0;
-    static int tenHeight = 0;
+    static int height = 0;
 
     while (esphome::uart::UARTDevice::available())
     {
@@ -62,16 +62,16 @@ void Desktronic::loop()
             switch (byte)
             {
             case Tens::TENS_70:
-                tenHeight = 70;
+                height = 70;
                 break;
             case Tens::TENS_80:
-                tenHeight = 80;
+                height = 80;
                 break;
             case Tens::TENS_90:
-                tenHeight = 90;
+                height = 90;
                 break;
             case Tens::TENS_100:
-                tenHeight = 100;
+                height = 100;
                 break;
             default:
                 break;
@@ -79,6 +79,40 @@ void Desktronic::loop()
             break;
         case 2:
             state = 3;
+            switch (byte)
+            {
+            case Units::UNITS_0:
+                break;
+            case Units::UNITS_1:
+                height += 1;
+                break;
+            case Units::UNITS_2:
+                height += 2;
+                break;
+            case Units::UNITS_3:
+                height += 3;
+                break;
+            case Units::UNITS_4:
+                height += 4;
+                break;
+            case Units::UNITS_5:
+                height += 5;
+                break;
+            case Units::UNITS_6:
+                height += 6;
+                break;
+            case Units::UNITS_7:
+                height += 7;
+                break;
+            case Units::UNITS_8:
+                height += 8;
+                break;
+            case Units::UNITS_9:
+                height += 9;
+                break;
+            default:
+                break;
+            }
             break;
         case 3:
             state = 4;
@@ -88,10 +122,10 @@ void Desktronic::loop()
             break;
         case 5:
             ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
-            ESP_LOGI(TAG, "Current Ten Height: %d", tenHeight);
+            ESP_LOGI(TAG, "Current Ten Height: %d", height);
 
             state = 0;
-            tenHeight = 0;
+            height = 0;
 
             break;
         default:

@@ -26,19 +26,19 @@ enum Tens : uint8_t
     TENS_100 = 0x06,
 };
 
-// enum Units : uint8_t
-// {
-//     UNITS_0 = 0xBF,
-//     UNITS_1 = 0x86,
-//     UNITS_2 = 0xDB,
-//     UNITS_3 = 0xCF,
-//     UNITS_4 = 0xE6,
-//     UNITS_5 = 0xED,
-//     UNITS_6 = 0xFD,
-//     UNITS_7 = 0x87,
-//     UNITS_8 = 0xFF,
-//     UNITS_9 = 0xEF,
-// };
+enum Units : uint8_t
+{
+    UNITS_0 = 0xBF,
+    UNITS_1 = 0x86,
+    UNITS_2 = 0xDB,
+    UNITS_3 = 0xCF,
+    UNITS_4 = 0xE6,
+    UNITS_5 = 0xED,
+    UNITS_6 = 0xFD,
+    UNITS_7 = 0x87,
+    UNITS_8 = 0xFF,
+    UNITS_9 = 0xEF,
+};
 
 // enum FirstDecimal : uint8_t
 // {

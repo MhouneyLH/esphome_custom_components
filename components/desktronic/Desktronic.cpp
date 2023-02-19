@@ -25,17 +25,17 @@ const char* desktronicOperationToString(const DesktronicOperation operation)
 
 void Desktronic::setup()
 {
-    if (up_pin_ != nullptr)
+    if (!up_pin_)
     {
         up_pin_->digital_write(false);
     }
 
-    if (down_pin_ != nullptr)
+    if (!down_pin_)
     {
         down_pin_->digital_write(false);
     }
 
-    if (request_pin_ != nullptr)
+    if (!request_pin_)
     {
         request_pin_->digital_write(true);
         request_time_ = esphome::millis();
@@ -53,58 +53,66 @@ void Desktronic::loop()
         int value;
 
         esphome::uart::UARTDevice::read_byte(&readByte);
-        switch (state)
-        {
-        case 0:
-            if (readByte == 1)
-            {
-                state = 1;
-            }
+        ESP_LOGI(TAG, "Received byte: %d", readByte);
 
-            break;
-        case 1:
-            if (readByte == 1)
-            {
-                state = 2;
-            }
-            else
-            {
-                state = 0;
-            }
+        //     switch (state)
+        //     {
+        //     case 0:
+        //         if (readByte == 1)
+        //         {
+        //             state = 1;
+        //         }
 
-            break;
-        case 2:
-            high_byte = readByte;
-            state = 3;
+        //         break;
+        //     case 1:
+        //         if (readByte == 1)
+        //         {
+        //             state = 2;
+        //         }
+        //         else
+        //         {
+        //             state = 0;
+        //         }
 
-            break;
-        case 3:
-            value = (high_byte << 8) + readByte;
-            current_pos_ = value;
+        //         break;
+        //     case 2:
+        //         high_byte = readByte;
+        //         state = 3;
 
-            if (height_sensor_ != nullptr)
-            {
-                height_sensor_->publish_state(value);
-            }
+        //         break;
+        //     case 3:
+        //         value = (high_byte << 8) + readByte;
+        //         current_pos_ = value;
 
-            state = 0;
-            break;
-        }
-    }
+        //         if (!height_sensor_)
+        //         {
+        //             height_sensor_->publish_state(value);
+        //         }
 
-    if (target_pos_ >= 0)
-    {
-        if ((abs(target_pos_ - current_pos_) < stopping_distance_) ||
-            ((timeout_ >= 0) && (millis() - start_time_ >= timeout_)))
-        {
-            stop();
-        }
-    }
+        //         state = 0;
+        //         break;
+        //     case 4:
+        //         break;
+        //     case 5:
+        //         break;
+        //     default:
+        //         break;
+        //     }
+        // }
 
-    if ((request_time_ > 0) && (millis() - request_time_ >= 100))
-    {
-        request_pin_->digital_write(false);
-        request_time_ = 0;
+        // if (target_pos_ >= 0)
+        // {
+        //     if ((abs(target_pos_ - current_pos_) < stopping_distance_) ||
+        //         ((timeout_ >= 0) && (millis() - start_time_ >= timeout_)))
+        //     {
+        //         stop();
+        //     }
+        // }
+
+        // if ((request_time_ > 0) && (millis() - request_time_ >= 100))
+        // {
+        //     request_pin_->digital_write(false);
+        //     request_time_ = 0;
     }
 }
 
@@ -157,12 +165,12 @@ void Desktronic::stop()
 {
     target_pos_ = -1;
 
-    if (up_pin_ != nullptr)
+    if (!up_pin_)
     {
         up_pin_->digital_write(false);
     }
 
-    if (down_pin_ != nullptr)
+    if (!down_pin_)
     {
         down_pin_->digital_write(false);
     }

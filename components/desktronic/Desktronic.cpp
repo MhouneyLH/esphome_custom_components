@@ -57,6 +57,8 @@ void Desktronic::loop()
         {
             if (byte == 0x5A)
             {
+                state = 0;
+                height = 0;
                 skipGarbage = false;
             }
             else

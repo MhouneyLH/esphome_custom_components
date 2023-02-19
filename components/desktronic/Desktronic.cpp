@@ -45,74 +45,37 @@ void Desktronic::setup()
 void Desktronic::loop()
 {
     static int state = 0;
-    static uint8_t high_byte;
 
     while (esphome::uart::UARTDevice::available())
     {
-        uint8_t readByte;
-        int value;
+        uint8_t byte;
+        esphome::uart::UARTDevice::read_byte(&byte);
 
-        esphome::uart::UARTDevice::read_byte(&readByte);
-        ESP_LOGI(TAG, "Received byte: 0x%x", readByte);
-
-        //     switch (state)
-        //     {
-        //     case 0:
-        //         if (readByte == 1)
-        //         {
-        //             state = 1;
-        //         }
-
-        //         break;
-        //     case 1:
-        //         if (readByte == 1)
-        //         {
-        //             state = 2;
-        //         }
-        //         else
-        //         {
-        //             state = 0;
-        //         }
-
-        //         break;
-        //     case 2:
-        //         high_byte = readByte;
-        //         state = 3;
-
-        //         break;
-        //     case 3:
-        //         value = (high_byte << 8) + readByte;
-        //         current_pos_ = value;
-
-        //         if (!height_sensor_)
-        //         {
-        //             height_sensor_->publish_state(value);
-        //         }
-
-        //         state = 0;
-        //         break;
-        //     case 4:
-        //         break;
-        //     case 5:
-        //         break;
-        //     default:
-        //         break;
-        //     }
-        // }
-
-        // if (target_pos_ >= 0)
-        // {
-        //     if ((abs(target_pos_ - current_pos_) < stopping_distance_) ||
-        //         ((timeout_ >= 0) && (millis() - start_time_ >= timeout_)))
-        //     {
-        //         stop();
-        //     }
-        // }
-
-        // if ((request_time_ > 0) && (millis() - request_time_ >= 100))
-        // {
-        //     request_pin_->digital_write(false);
-        //     request_time_ = 0;
+        switch (state)
+        {
+        case 0:
+            state = 1;
+            break;
+        case 1:
+            state = 2;
+            // height += tens_map.at(static_cast<Tens>(byte));
+            break;
+        case 2:
+            state = 3;
+            // height += units_map.at(static_cast<Units>(byte));
+            break;
+        case 3:
+            state = 4;
+            // height += first_decimal_map.at(static_cast<FirstDecimal>(byte));
+            break;
+        case 4:
+            state = 5;
+            break;
+        case 5:
+            state = 0;
+            ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
+            break;
+        }
     }
 }
 

@@ -25,7 +25,6 @@ const char* desktronicOperationToString(const DesktronicOperation operation)
 
 void Desktronic::setup()
 {
-    test_str = "110";
     if (up_pin_ != nullptr)
     {
         up_pin_->digital_write(false);
@@ -45,7 +44,6 @@ void Desktronic::setup()
 
 void Desktronic::loop()
 {
-    test_str = "220";
     static int state = 0;
     static uint8_t high_byte;
 
@@ -122,50 +120,41 @@ void Desktronic::setLogConfig()
 
 void Desktronic::move_to_position(const int targetPosition)
 {
-    test_str += "1";
     if (abs(targetPosition - current_pos_) < stopping_distance_)
     {
         return;
     }
 
-    test_str += "2";
     if (targetPosition > current_pos_)
     {
-        test_str += "3";
         if (up_pin_ == nullptr)
         {
             return;
         }
-        test_str += "4";
         up_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_RAISING;
     }
     else
     {
-        test_str += "5";
         if (down_pin_ == nullptr)
         {
             return;
         }
 
-        test_str += "1";
         down_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_LOWERING;
     }
 
     target_pos_ = targetPosition;
-    test_str += "1";
 
     if (timeout_ >= 0)
     {
-        test_str += "1";
         start_time_ = esphome::millis();
     }
 }
 
 void Desktronic::stop()
 {
-    test_str = "8880";
     target_pos_ = -1;
 
     if (up_pin_ != nullptr)

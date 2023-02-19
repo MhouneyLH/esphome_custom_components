@@ -45,6 +45,7 @@ void Desktronic::setup()
 void Desktronic::loop()
 {
     static int state = 0;
+    static int tenHeight = 0;
 
     while (esphome::uart::UARTDevice::available())
     {
@@ -58,22 +59,42 @@ void Desktronic::loop()
             break;
         case 1:
             state = 2;
-            // height += tens_map.at(static_cast<Tens>(byte));
+            switch (byte)
+            {
+            case Tens::TENS_70:
+                tenHeight = 70;
+                break;
+            case Tens::TENS_80:
+                tenHeight = 80;
+                break;
+            case Tens::TENS_90:
+                tenHeight = 90;
+                break;
+            case Tens::TENS_100:
+                tenHeight = 100;
+                break;
+            default:
+                break;
+            }
             break;
         case 2:
             state = 3;
-            // height += units_map.at(static_cast<Units>(byte));
             break;
         case 3:
             state = 4;
-            // height += first_decimal_map.at(static_cast<FirstDecimal>(byte));
             break;
         case 4:
             state = 5;
             break;
         case 5:
-            state = 0;
             ESP_LOGI(TAG, "Received last byte: 0x%x", byte);
+            ESP_LOGI(TAG, "Current Ten Height: %d", tenHeight);
+
+            state = 0;
+            tenHeight = 0;
+
+            break;
+        default:
             break;
         }
     }

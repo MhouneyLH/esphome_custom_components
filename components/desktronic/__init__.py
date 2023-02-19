@@ -22,7 +22,7 @@ CONFIG_SCHEMA = config_validation.COMPONENT_SCHEMA.extend({
     config_validation.Optional(CONF_UP): pins.gpio_output_pin_schema,
     config_validation.Optional(CONF_DOWN): pins.gpio_output_pin_schema,
     config_validation.Optional(CONF_REQUEST): pins.gpio_output_pin_schema,
-    config_validation.Optional(CONF_HEIGHT): sensor.sensor_schema(icon=ICON_GAUGE, accuracy_decimals=0),
+    config_validation.Optional(CONF_HEIGHT): sensor.sensor_schema(icon=ICON_GAUGE, accuracy_decimals=1),
     config_validation.Optional(CONF_STOPPING_DISTANCE, default=DEFAULT_STOPPING_DISTANCE): config_validation.positive_int,
     config_validation.Optional(CONF_TIMEOUT): config_validation.time_period,
 }).extend(uart.UART_DEVICE_SCHEMA)

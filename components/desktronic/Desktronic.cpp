@@ -26,21 +26,112 @@ const char* desktronicOperationToString(const DesktronicOperation operation)
 
 void Desktronic::setup()
 {
-    if (!up_pin_)
+    if (up_pin_)
     {
         up_pin_->digital_write(false);
     }
 
-    if (!down_pin_)
+    if (down_pin_)
     {
         down_pin_->digital_write(false);
     }
 
-    if (!request_pin_)
+    if (request_pin_)
     {
         request_pin_->digital_write(true);
         request_time_ = esphome::millis();
     }
+}
+
+void Desktronic::loop()
+{
+    static int bytePositionInUARTMessage = 0;
+    static double height = 0.0;
+    bool beginning_skipping_garbage_bytes = true;
+
+    while (esphome::uart::UARTDevice::available())
+    {
+        uint8_t byte;
+        esphome::uart::UARTDevice::read_byte(&byte);
+
+        if (beginning_skipping_garbage_bytes)
+        {
+            if (is_skipping_garbage_byte(byte))
+            {
+                continue;
+            }
+            else
+            {
+                beginning_skipping_garbage_bytes = false;
+                bytePositionInUARTMessage = 0;
+                height = 0.0;
+            }
+        }
+
+        handle_byte(byte, bytePositionInUARTMessage, height);
+    }
+}
+
+void Desktronic::setLogConfig()
+{
+    ESP_LOGCONFIG(TAG, "DesktronicDesk:");
+
+    LOG_SENSOR("", "Height", height_sensor_);
+    LOG_PIN("UpPin: ", up_pin_);
+    LOG_PIN("DownPin: ", down_pin_);
+    LOG_PIN("RequestPin: ", request_pin_);
+}
+
+void Desktronic::move_to_position(const int targetPosition)
+{
+    if (abs(targetPosition - current_pos_) < stopping_distance_)
+    {
+        return;
+    }
+
+    if (targetPosition > current_pos_)
+    {
+        if (!up_pin_)
+        {
+            return;
+        }
+        up_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_RAISING;
+    }
+    else
+    {
+        if (!down_pin_)
+        {
+            return;
+        }
+
+        down_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_LOWERING;
+    }
+
+    target_pos_ = targetPosition;
+
+    if (timeout_ >= 0)
+    {
+        start_time_ = esphome::millis();
+    }
+}
+
+void Desktronic::stop()
+{
+    target_pos_ = -1;
+
+    if (up_pin_)
+    {
+        up_pin_->digital_write(false);
+    }
+
+    if (down_pin_)
+    {
+        down_pin_->digital_write(false);
+    }
+
+    current_operation = DESKTRONIC_OPERATION_IDLE;
 }
 
 int Desktronic::get_tens_digit(const uint8_t byte)
@@ -146,7 +237,6 @@ void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& heig
         bytePosition = 5;
         break;
     case 5:
-        ESP_LOGI(TAG, "Current Height: %f", height);
         current_pos_ = height;
         if (height_sensor_)
         {
@@ -160,97 +250,6 @@ void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& heig
     default:
         break;
     }
-}
-
-void Desktronic::loop()
-{
-    static int bytePositionInUARTMessage = 0;
-    static double height = 0.0;
-    bool beginning_skipping_garbage_bytes = true;
-
-    while (esphome::uart::UARTDevice::available())
-    {
-        uint8_t byte;
-        esphome::uart::UARTDevice::read_byte(&byte);
-
-        if (beginning_skipping_garbage_bytes)
-        {
-            if (is_skipping_garbage_byte(byte))
-            {
-                continue;
-            }
-            else
-            {
-                beginning_skipping_garbage_bytes = false;
-                bytePositionInUARTMessage = 0;
-                height = 0.0;
-            }
-        }
-
-        handle_byte(byte, bytePositionInUARTMessage, height);
-    }
-}
-
-void Desktronic::setLogConfig()
-{
-    ESP_LOGCONFIG(TAG, "DesktronicDesk:");
-
-    LOG_SENSOR("", "Height", height_sensor_);
-    LOG_PIN("UpPin: ", up_pin_);
-    LOG_PIN("DownPin: ", down_pin_);
-    LOG_PIN("RequestPin: ", request_pin_);
-}
-
-void Desktronic::move_to_position(const int targetPosition)
-{
-    if (abs(targetPosition - current_pos_) < stopping_distance_)
-    {
-        return;
-    }
-
-    if (targetPosition > current_pos_)
-    {
-        if (up_pin_ == nullptr)
-        {
-            return;
-        }
-        up_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_RAISING;
-    }
-    else
-    {
-        if (down_pin_ == nullptr)
-        {
-            return;
-        }
-
-        down_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_LOWERING;
-    }
-
-    target_pos_ = targetPosition;
-
-    if (timeout_ >= 0)
-    {
-        start_time_ = esphome::millis();
-    }
-}
-
-void Desktronic::stop()
-{
-    target_pos_ = -1;
-
-    if (!up_pin_)
-    {
-        up_pin_->digital_write(false);
-    }
-
-    if (!down_pin_)
-    {
-        down_pin_->digital_write(false);
-    }
-
-    current_operation = DESKTRONIC_OPERATION_IDLE;
 }
 
 } // namespace desktronic

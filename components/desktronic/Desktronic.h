@@ -378,16 +378,17 @@ public:
     void set_stopping_distance(const int distance) { stopping_distance_ = distance; }
     void set_timeout(const int timeout) { timeout_ = timeout; }
 
+    void move_to_position(const int targetPosition);
+    void stop();
+
+    DesktronicOperation current_operation = DESKTRONIC_OPERATION_IDLE;
+
+private:
     int get_tens_digit(const uint8_t byte);
     int get_units_digit(const uint8_t byte);
     double get_first_decimal_digit(const uint8_t byte);
     bool is_skipping_garbage_byte(const uint8_t byte);
     void handle_byte(const uint8_t byte, int& bytePosition, double& height);
-
-    void move_to_position(const int targetPosition);
-    void stop();
-
-    DesktronicOperation current_operation = DESKTRONIC_OPERATION_IDLE;
 
 protected:
     sensor::Sensor* height_sensor_ = nullptr;

@@ -8,6 +8,7 @@ namespace desktronic
 
 static const char* TAG = "desktronic";
 static const unsigned int UART_MESSAGE_LENGTH = 6U;
+static const uint8_t UART_MESSAGE_START = 0x5A;
 
 const char* desktronicOperationToString(const DesktronicOperation operation)
 {
@@ -211,7 +212,7 @@ double Desktronic::get_first_decimal_digit(const uint8_t byte)
 
 bool Desktronic::is_skipping_garbage_byte(const uint8_t byte)
 {
-    return byte != 0x5A;
+    return byte != UART_MESSAGE_START;
 }
 
 void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& height)
@@ -240,6 +241,7 @@ void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& heig
         current_pos_ = height;
         if (height_sensor_)
         {
+            // accuracy is set in __init__.py
             height_sensor_->publish_state(height);
         }
 

@@ -87,6 +87,7 @@ void Desktronic::setLogConfig()
 void Desktronic::move_to_position(const double targetPositionInCm)
 {
     // should not move if the stopping distance is exceeded
+    ESP_LOGI(TAG, "1 Moving to position: %f", targetPositionInCm);
     if (get_delta_height(targetPositionInCm) < stopping_distance_)
     {
         return;
@@ -94,25 +95,30 @@ void Desktronic::move_to_position(const double targetPositionInCm)
 
     if (is_moving_up(targetPositionInCm))
     {
+        ESP_LOGI(TAG, "up Moving to position: %f", targetPositionInCm);
         if (!up_pin_)
         {
             return;
         }
+        ESP_LOGI(TAG, "up 1 Moving to position: %f", targetPositionInCm);
 
         up_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_RAISING;
     }
     else
     {
+        ESP_LOGI(TAG, "down Moving to position: %f", targetPositionInCm);
         if (!down_pin_)
         {
             return;
         }
 
+        ESP_LOGI(TAG, "down 1 Moving to position: %f", targetPositionInCm);
         down_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_LOWERING;
     }
 
+    ESP_LOGI(TAG, "end Moving to position: %f", targetPositionInCm);
     target_pos_ = targetPositionInCm;
 
     if (timeout_ >= 0)

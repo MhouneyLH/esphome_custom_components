@@ -56,6 +56,7 @@ void Desktronic::loop()
     {
         uint8_t byte;
         esphome::uart::UARTDevice::read_byte(&byte);
+        ESP_LOGI(TAG, "Received byte: 0x%x", byte);
 
         if (beginning_skipping_garbage_bytes)
         {
@@ -104,6 +105,9 @@ void Desktronic::increase_height_by_0_1_cm()
     const Units units = get_units_digit_by_height(target_pos_);
     const FirstDecimal first_decimal = get_first_decimal_byte_by_height(target_pos_);
     const Id id = get_id_by_height(target_pos_);
+
+    ESP_LOGI(TAG, "Target Height: %f", target_pos_);
+    ESP_LOGI(TAG, "Tens: 0x%x; Units: 0x%x; FirstDecimal: 0x%x; Id: 0x%x", tens, units, first_decimal, id);
 
     if (!uart::UARTDevice::available())
     {
@@ -1604,11 +1608,12 @@ void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& heig
         break;
     case 5:
         current_pos_ = height;
-        if (height_sensor_)
-        {
-            // accuracy is set in __init__.py
-            height_sensor_->publish_state(height);
-        }
+        ESP_LOGI(TAG, "-----");
+        // if (height_sensor_)
+        // {
+        //     // accuracy is set in __init__.py
+        //     height_sensor_->publish_state(height);
+        // }
 
         bytePosition = 0;
         height = 0.0;

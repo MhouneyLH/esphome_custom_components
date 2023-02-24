@@ -84,6 +84,40 @@ void Desktronic::setLogConfig()
     LOG_PIN("RequestPin: ", request_pin_);
 }
 
+void Desktronic::increase_height_by_0_1_cm()
+{
+    ESP_LOGI(TAG, "Increase height bei 0.1cm");
+
+    if (!up_pin_)
+    {
+        ESP_LOGI(TAG, "Increase height bei 0.1cm failed. No up pin.");
+        return;
+    }
+
+    up_pin_->digital_write(true);
+    current_operation = DESKTRONIC_OPERATION_RAISING;
+
+    target_pos_ = current_pos_ + DESKTRONIC_MOVE_STEP;
+    ESP_LOGI(TAG, "Increase height bei 0.1cm finished");
+}
+
+void Desktronic::decrease_height_by_0_1_cm()
+{
+    ESP_LOGI(TAG, "Decrease height bei 0.1cm");
+
+    if (!down_pin_)
+    {
+        ESP_LOGI(TAG, "Decrease height bei 0.1cm failed. No down pin.");
+        return;
+    }
+
+    down_pin_->digital_write(true);
+    current_operation = DESKTRONIC_OPERATION_LOWERING;
+
+    target_pos_ = current_pos_ - DESKTRONIC_MOVE_STEP;
+    ESP_LOGI(TAG, "Decrease height bei 0.1cm finished");
+}
+
 void Desktronic::move_to_position(const double targetPositionInCm)
 {
     // should not move if the stopping distance is exceeded
@@ -119,6 +153,8 @@ void Desktronic::move_to_position(const double targetPositionInCm)
     }
 
     ESP_LOGI(TAG, "end Moving to position: %f", targetPositionInCm);
+
+    // @todo: @future-me what the hell does this do??
     target_pos_ = targetPositionInCm;
 
     if (timeout_ >= 0)

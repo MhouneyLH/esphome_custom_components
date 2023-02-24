@@ -378,6 +378,9 @@ public:
     void set_stopping_distance(const int distance) { stopping_distance_ = distance; }
     void set_timeout(const int timeout) { timeout_ = timeout; }
 
+    void increase_height_by_0_1_cm();
+    void decrease_height_by_0_1_cm();
+
     void move_to_position(const double targetPositionInCm);
     double get_delta_height(const double newHeight) const;
     bool is_moving_up(const double targetHeight) const;

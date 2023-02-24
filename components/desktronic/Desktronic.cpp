@@ -105,6 +105,12 @@ void Desktronic::increase_height_by_0_1_cm()
     const FirstDecimal first_decimal = get_first_decimal_byte_by_height(target_pos_);
     const Id id = get_id_by_height(target_pos_);
 
+    if (!uart::UARTDevice::available())
+    {
+        ESP_LOGI(TAG, "UART not available for writing increase height by 0.1cm");
+        return;
+    }
+
     esphome::uart::UARTDevice::write_byte(UART_MESSAGE_START);
     esphome::uart::UARTDevice::write_byte(tens);
     esphome::uart::UARTDevice::write_byte(units);
@@ -1496,13 +1502,13 @@ Tens Desktronic::get_tens_byte_by_height(const double height) const
     const int pureDigit = static_cast<int>(height) / 10;
     switch (pureDigit)
     {
-    case 70:
+    case 7:
         return Tens::TENS_70;
-    case 80:
+    case 8:
         return Tens::TENS_80;
-    case 90:
+    case 9:
         return Tens::TENS_90;
-    case 100:
+    case 10:
         return Tens::TENS_100;
     default:
         return Tens::TENS_INVALID;

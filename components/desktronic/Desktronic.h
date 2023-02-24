@@ -378,7 +378,9 @@ public:
     void set_stopping_distance(const int distance) { stopping_distance_ = distance; }
     void set_timeout(const int timeout) { timeout_ = timeout; }
 
-    void move_to_position(const int targetPosition);
+    void move_to_position(const double targetPositionInCm);
+    double get_delta_height(const double newHeight) const;
+    bool is_moving_up(const double targetHeight) const;
     void stop();
 
     DesktronicOperation current_operation = DESKTRONIC_OPERATION_IDLE;

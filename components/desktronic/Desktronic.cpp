@@ -8,6 +8,7 @@ namespace desktronic
 
 static const char* TAG = "desktronic";
 static const unsigned int UART_MESSAGE_LENGTH = 6U;
+static const double DESKTRONIC_MOVE_STEP = 0.1;
 static const uint8_t UART_MESSAGE_START = 0x5A;
 
 const char* desktronicOperationToString(const DesktronicOperation operation)
@@ -83,19 +84,21 @@ void Desktronic::setLogConfig()
     LOG_PIN("RequestPin: ", request_pin_);
 }
 
-void Desktronic::move_to_position(const int targetPosition)
+void Desktronic::move_to_position(const double targetPositionInCm)
 {
-    if (abs(targetPosition - current_pos_) < stopping_distance_)
+    // should not move if the stopping distance is exceeded
+    if (get_delta_height(targetPositionInCm) < stopping_distance_)
     {
         return;
     }
 
-    if (targetPosition > current_pos_)
+    if (is_moving_up(targetPositionInCm))
     {
         if (!up_pin_)
         {
             return;
         }
+
         up_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_RAISING;
     }
@@ -110,12 +113,22 @@ void Desktronic::move_to_position(const int targetPosition)
         current_operation = DESKTRONIC_OPERATION_LOWERING;
     }
 
-    target_pos_ = targetPosition;
+    target_pos_ = targetPositionInCm;
 
     if (timeout_ >= 0)
     {
         start_time_ = esphome::millis();
     }
+}
+
+double Desktronic::get_delta_height(const double newHeight) const
+{
+    return abs(newHeight - current_pos_);
+}
+
+bool Desktronic::is_moving_up(const double targetHeight) const
+{
+    return targetHeight > current_pos_;
 }
 
 void Desktronic::stop()

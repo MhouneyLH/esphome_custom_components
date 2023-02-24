@@ -99,30 +99,58 @@ void Desktronic::increase_height_by_0_1_cm()
     up_pin_->digital_write(true);
     current_operation = DESKTRONIC_OPERATION_RAISING;
 
-    target_pos_ = current_pos_ + DESKTRONIC_MOVE_STEP;
-
-    const Tens tens = get_tens_byte_by_height(target_pos_);
-    const Units units = get_units_digit_by_height(target_pos_);
-    const FirstDecimal first_decimal = get_first_decimal_byte_by_height(target_pos_);
-    const Id id = get_id_by_height(target_pos_);
-
-    ESP_LOGI(TAG, "Target Height: %f", target_pos_);
-    ESP_LOGI(TAG, "Tens: 0x%x; Units: 0x%x; FirstDecimal: 0x%x; Id: 0x%x", tens, units, first_decimal, id);
-
     if (!uart::UARTDevice::available())
     {
         ESP_LOGI(TAG, "UART not available for writing increase height by 0.1cm");
         return;
     }
 
-    esphome::uart::UARTDevice::write_byte(UART_MESSAGE_START);
-    esphome::uart::UARTDevice::write_byte(tens);
-    esphome::uart::UARTDevice::write_byte(units);
-    esphome::uart::UARTDevice::write_byte(first_decimal);
-    esphome::uart::UARTDevice::write_byte(UART_MESSAGE_BEFORE_CHECKSUM);
-    esphome::uart::UARTDevice::write_byte(id);
+    esphome::uart::UARTDevice::write_byte(0xA5);
+    esphome::uart::UARTDevice::write_byte(0x00);
+    esphome::uart::UARTDevice::write_byte(0x20);
+    esphome::uart::UARTDevice::write_byte(0xDF);
+    esphome::uart::UARTDevice::write_byte(0xFF);
+
+    target_pos_ = current_pos_ + DESKTRONIC_MOVE_STEP;
 
     ESP_LOGI(TAG, "Increase height bei 0.1cm finished");
+
+    // ------------------------------
+    // ESP_LOGI(TAG, "Increase height bei 0.1cm");
+
+    // if (!up_pin_)
+    // {
+    //     ESP_LOGI(TAG, "Increase height bei 0.1cm failed. No up pin.");
+    //     return;
+    // }
+
+    // up_pin_->digital_write(true);
+    // current_operation = DESKTRONIC_OPERATION_RAISING;
+
+    // target_pos_ = current_pos_ + DESKTRONIC_MOVE_STEP;
+
+    // const Tens tens = get_tens_byte_by_height(target_pos_);
+    // const Units units = get_units_digit_by_height(target_pos_);
+    // const FirstDecimal first_decimal = get_first_decimal_byte_by_height(target_pos_);
+    // const Id id = get_id_by_height(target_pos_);
+
+    // ESP_LOGI(TAG, "Target Height: %f", target_pos_);
+    // ESP_LOGI(TAG, "Tens: 0x%x; Units: 0x%x; FirstDecimal: 0x%x; Id: 0x%x", tens, units, first_decimal, id);
+
+    // if (!uart::UARTDevice::available())
+    // {
+    //     ESP_LOGI(TAG, "UART not available for writing increase height by 0.1cm");
+    //     return;
+    // }
+
+    // esphome::uart::UARTDevice::write_byte(UART_MESSAGE_START);
+    // esphome::uart::UARTDevice::write_byte(tens);
+    // esphome::uart::UARTDevice::write_byte(units);
+    // esphome::uart::UARTDevice::write_byte(first_decimal);
+    // esphome::uart::UARTDevice::write_byte(UART_MESSAGE_BEFORE_CHECKSUM);
+    // esphome::uart::UARTDevice::write_byte(id);
+
+    // ESP_LOGI(TAG, "Increase height bei 0.1cm finished");
 }
 
 void Desktronic::decrease_height_by_0_1_cm()

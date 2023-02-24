@@ -10,6 +10,7 @@ static const char* TAG = "desktronic";
 static const unsigned int UART_MESSAGE_LENGTH = 6U;
 static const double DESKTRONIC_MOVE_STEP = 0.1;
 static const uint8_t UART_MESSAGE_START = 0x5A;
+static const uint8_t UART_MESSAGE_BEFORE_CHECKSUM = 0x01;
 
 const char* desktronicOperationToString(const DesktronicOperation operation)
 {
@@ -98,6 +99,19 @@ void Desktronic::increase_height_by_0_1_cm()
     current_operation = DESKTRONIC_OPERATION_RAISING;
 
     target_pos_ = current_pos_ + DESKTRONIC_MOVE_STEP;
+
+    const Tens tens = get_tens_byte_by_height(target_pos_);
+    const Units units = get_units_digit_by_height(target_pos_);
+    const FirstDecimal first_decimal = get_first_decimal_byte_by_height(target_pos_);
+    const Id id = get_id_by_height(target_pos_);
+
+    esphome::uart::UARTDevice::write_byte(UART_MESSAGE_START);
+    esphome::uart::UARTDevice::write_byte(tens);
+    esphome::uart::UARTDevice::write_byte(units);
+    esphome::uart::UARTDevice::write_byte(first_decimal);
+    esphome::uart::UARTDevice::write_byte(UART_MESSAGE_BEFORE_CHECKSUM);
+    esphome::uart::UARTDevice::write_byte(id);
+
     ESP_LOGI(TAG, "Increase height bei 0.1cm finished");
 }
 
@@ -265,7 +279,7 @@ double Desktronic::get_first_decimal_digit(const uint8_t byte)
     }
 }
 
-double Desktronic::get_id_by_height(const double height)
+Id Desktronic::get_id_by_height(const double height) const
 {
     if (height == 72.0)
     {
@@ -1474,6 +1488,84 @@ double Desktronic::get_id_by_height(const double height)
     else
     {
         return Id::ID_INVALID;
+    }
+}
+
+Tens Desktronic::get_tens_byte_by_height(const double height) const
+{
+    const int pureDigit = static_cast<int>(height) / 10;
+    switch (pureDigit)
+    {
+    case 70:
+        return Tens::TENS_70;
+    case 80:
+        return Tens::TENS_80;
+    case 90:
+        return Tens::TENS_90;
+    case 100:
+        return Tens::TENS_100;
+    default:
+        return Tens::TENS_INVALID;
+    }
+}
+
+Units Desktronic::get_units_digit_by_height(const double height) const
+{
+    const int pureDigit = static_cast<int>(height) % 10;
+    switch (pureDigit)
+    {
+    case 0:
+        return Units::UNITS_0;
+    case 1:
+        return Units::UNITS_1;
+    case 2:
+        return Units::UNITS_2;
+    case 3:
+        return Units::UNITS_3;
+    case 4:
+        return Units::UNITS_4;
+    case 5:
+        return Units::UNITS_5;
+    case 6:
+        return Units::UNITS_6;
+    case 7:
+        return Units::UNITS_7;
+    case 8:
+        return Units::UNITS_8;
+    case 9:
+        return Units::UNITS_9;
+    default:
+        return Units::UNITS_INVALID;
+    }
+}
+
+FirstDecimal Desktronic::get_first_decimal_byte_by_height(const double height) const
+{
+    const int pureDigit = static_cast<int>(height * 10) % 10;
+    switch (pureDigit)
+    {
+    case 0:
+        return FirstDecimal::DECIMAL_0;
+    case 1:
+        return FirstDecimal::DECIMAL_1;
+    case 2:
+        return FirstDecimal::DECIMAL_2;
+    case 3:
+        return FirstDecimal::DECIMAL_3;
+    case 4:
+        return FirstDecimal::DECIMAL_4;
+    case 5:
+        return FirstDecimal::DECIMAL_5;
+    case 6:
+        return FirstDecimal::DECIMAL_6;
+    case 7:
+        return FirstDecimal::DECIMAL_7;
+    case 8:
+        return FirstDecimal::DECIMAL_8;
+    case 9:
+        return FirstDecimal::DECIMAL_9;
+    default:
+        return FirstDecimal::DECIMAL_INVALID;
     }
 }
 

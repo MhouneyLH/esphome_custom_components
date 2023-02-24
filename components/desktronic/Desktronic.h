@@ -20,6 +20,7 @@ enum DesktronicOperation : uint8_t
 
 enum Tens : uint8_t
 {
+    TENS_INVALID = 1,
     TENS_70 = 0x07,
     TENS_80 = 0x7F,
     TENS_90 = 0x6F,
@@ -28,6 +29,7 @@ enum Tens : uint8_t
 
 enum Units : uint8_t
 {
+    UNITS_INVALID = 1,
     UNITS_0 = 0xBF,
     UNITS_1 = 0x86,
     UNITS_2 = 0xDB,
@@ -42,6 +44,7 @@ enum Units : uint8_t
 
 enum FirstDecimal : uint8_t
 {
+    DECIMAL_INVALID = 1,
     DECIMAL_0 = 0x3F,
     DECIMAL_1 = 0x06,
     DECIMAL_2 = 0x5B,
@@ -56,7 +59,7 @@ enum FirstDecimal : uint8_t
 
 enum Id : uint8_t
 {
-    ID_INVALID = -1,
+    ID_INVALID = 0,
     ID_72_0 = 0x22,
     ID_72_1 = 0xE9,
     ID_72_2 = 0x3E,
@@ -393,7 +396,10 @@ private:
     int get_tens_digit(const uint8_t byte);
     int get_units_digit(const uint8_t byte);
     double get_first_decimal_digit(const uint8_t byte);
-    double get_id_by_height(const double height);
+    Tens get_tens_byte_by_height(const double height) const;
+    Units get_units_digit_by_height(const double height) const;
+    FirstDecimal get_first_decimal_byte_by_height(const double height) const;
+    Id get_id_by_height(const double height) const;
     bool is_skipping_garbage_byte(const uint8_t byte);
     void handle_byte(const uint8_t byte, int& bytePosition, double& height);
 

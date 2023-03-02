@@ -130,7 +130,6 @@ void Desktronic::read_desk_uart()
             desk_rx_ = true;
             continue;
         }
-        ESP_LOGE(TAG, "1");
 
         desk_buffer_.push_back(byte);
         // -1, because of the start byte
@@ -141,7 +140,7 @@ void Desktronic::read_desk_uart()
 
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
-        ESP_LOGE(TAG, "2");
+
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
@@ -150,7 +149,7 @@ void Desktronic::read_desk_uart()
 
             continue;
         }
-        ESP_LOGE(TAG, "3");
+
         if (height_sensor_ != nullptr)
         {
             if (data[3] != 0x01)
@@ -169,6 +168,7 @@ void Desktronic::read_desk_uart()
             const int data0 = segment_to_number(data[0]);
             const int data1 = segment_to_number(data[1] - 0x80);
             const int data2 = segment_to_number(data[2]);
+            ESP_LOGE(TAG, "%02x %02x %02x", data0, data1, data2);
             if (data0 < 0x00 || data1 < 0x00 || data2 < 0x00)
             {
                 break;

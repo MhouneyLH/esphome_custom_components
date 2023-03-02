@@ -109,17 +109,15 @@ void Desktronic::read_remote_uart()
 
 void Desktronic::read_desk_uart()
 {
-    ESP_LOGE(TAG, "-1");
     if (desk_uart_ == nullptr)
     {
         return;
     }
 
-    ESP_LOGE(TAG, "0");
-
     uint8_t byte;
     while (desk_uart_->available())
     {
+        ESP_LOGE(TAG, "0EEE");
         desk_uart_->read_byte(&byte);
 
         if (!desk_rx_)
@@ -218,9 +216,7 @@ void Desktronic::publish_remote_states(const uint8_t data)
 
 void Desktronic::loop()
 {
-    ESP_LOGE(TAG, "hhhhh");
     read_remote_uart();
-    ESP_LOGE(TAG, "jjjjj");
     read_desk_uart();
 }
 

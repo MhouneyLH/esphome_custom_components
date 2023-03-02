@@ -163,7 +163,7 @@ void Desktronic::read_desk_uart()
             }
 
             // ESP_LOGE(TAG, "ffff");
-            ESP_LOGE(TAG, "%02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
+            ESP_LOGE(TAG, "%02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
             // @question: no really sure what this is
             if ((data[0] | data[1] | data[2]) == 0x00)
             {

@@ -173,7 +173,7 @@ void Desktronic::read_desk_uart()
             const int data0 = segment_to_number(data[0]);
             const int data1 = segment_to_number(data[1] - 0x80);
             const int data2 = segment_to_number(data[2]);
-            ESP_LOGE(TAG, "%02x %02x %02x", data0, data1, data2);
+            ESP_LOGE(TAG, "%02x %02x %02x", data[0], data[1], data[2]);
 
             if (data0 < 0x00 || data1 < 0x00 || data2 < 0x00)
             {

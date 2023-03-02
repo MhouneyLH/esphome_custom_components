@@ -218,7 +218,9 @@ void Desktronic::publish_remote_states(const uint8_t data)
 
 void Desktronic::loop()
 {
+    ESP_LOGV(TAG, "hhhhh");
     read_remote_uart();
+    ESP_LOGV(TAG, "jjjjj");
     read_desk_uart();
 }
 

@@ -132,6 +132,7 @@ void Desktronic::read_desk_uart()
         }
 
         desk_buffer_.push_back(byte);
+        ESP_LOGE(TAG, "fiiirst: %02x %02x %02x %02x %02x", desk_buffer_.at(desk_buffer_.size() - 1));
         // -1, because of the start byte
         // ESP_LOGE(TAG, "iiii");
         if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
@@ -141,6 +142,7 @@ void Desktronic::read_desk_uart()
 
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
+        ESP_LOGE(TAG, "befoore: %02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
 
         // ESP_LOGE(TAG, "kkkk");
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];

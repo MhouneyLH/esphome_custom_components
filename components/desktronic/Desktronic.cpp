@@ -117,7 +117,6 @@ void Desktronic::read_desk_uart()
     uint8_t byte;
     while (desk_uart_->available())
     {
-        ESP_LOGE(TAG, "0EEE");
         desk_uart_->read_byte(&byte);
 
         if (!desk_rx_)
@@ -163,7 +162,6 @@ void Desktronic::read_desk_uart()
             {
                 break;
             }
-            ESP_LOGE(TAG, "7");
 
             const int data0 = segment_to_number(data[0]);
             const int data1 = segment_to_number(data[1] - 0x80);

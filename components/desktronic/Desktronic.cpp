@@ -152,31 +152,32 @@ void Desktronic::read_desk_uart()
 
         if (height_sensor_ != nullptr)
         {
-            if (data[3] != 1)
+            if (data[3] != 0x01)
             {
-                ESP_LOGV(TAG, "unknown message type %02x", data[3]);
+                ESP_LOGV(TAG, "unknown message type %02x must be 0x01", data[3]);
                 break;
             }
 
-            if ((data[0] | data[1] | data[2]) == 0)
+            // @question: no really sure what this is
+            if ((data[0] | data[1] | data[2]) == 0x00)
             {
                 break;
             }
 
             const int data0 = segment_to_number(data[0]);
-            const int data1 = segment_to_number(data[1]);
+            const int data1 = segment_to_number(data[1] - 0x80);
             const int data2 = segment_to_number(data[2]);
-            if (data0 < 0 || data1 < 0 || data2 < 0)
+            if (data0 < 0x00 || data1 < 0x00 || data2 < 0x00)
             {
                 break;
             }
 
             float height = segment_to_number(data[0]) * 100 + segment_to_number(data[1]) * 10 + segment_to_number(data[2]);
-            if (data[1] & 0x80)
-            {
-                height /= 10.0;
-            }
-
+            // if (data[1] & 0x80)
+            // {
+            //     height /= 10.0;
+            // }
+            ESP_LOGV(TAG, "made it. height: %f", height);
             height_sensor_->publish_state(height);
         }
 

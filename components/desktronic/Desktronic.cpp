@@ -132,7 +132,7 @@ void Desktronic::read_desk_uart()
 
         desk_buffer_.push_back(byte);
         // -1, because of the start byte
-        ESP_LOGE(TAG, "uuu");
+        // ESP_LOGE(TAG, "iiii");
         if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
         {
             continue;
@@ -141,7 +141,7 @@ void Desktronic::read_desk_uart()
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
 
-        ESP_LOGE(TAG, "kkkk");
+        // ESP_LOGE(TAG, "kkkk");
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
@@ -151,18 +151,19 @@ void Desktronic::read_desk_uart()
             continue;
         }
 
-        ESP_LOGE(TAG, "rrrr");
+        // ESP_LOGE(TAG, "rrrr");
 
         if (height_sensor_ != nullptr)
         {
-            ESP_LOGE(TAG, "uuuu");
+            // ESP_LOGE(TAG, "uuuu");
             if (data[3] != 0x01)
             {
                 ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
                 break;
             }
 
-            ESP_LOGE(TAG, "ffff");
+            // ESP_LOGE(TAG, "ffff");
+            ESP_LOGE(TAG, "%02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
             // @question: no really sure what this is
             if ((data[0] | data[1] | data[2]) == 0x00)
             {

@@ -128,6 +128,7 @@ void Desktronic::read_desk_uart()
             }
 
             desk_buffer_.clear();
+            desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
             desk_rx_ = true;
 
             continue;
@@ -165,6 +166,8 @@ void Desktronic::read_desk_uart()
             if (data[3] != 0x01)
             {
                 ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
+                desk_buffer_.clear();
+                desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
                 break;
             }
 
@@ -173,6 +176,8 @@ void Desktronic::read_desk_uart()
             // @question: no really sure what this is
             if ((data[0] | data[1] | data[2]) == 0x00)
             {
+                desk_buffer_.clear();
+                desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
                 break;
             }
 
@@ -200,6 +205,7 @@ void Desktronic::read_desk_uart()
         ESP_LOGE(TAG, "5");
 
         desk_buffer_.clear();
+        desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
     }
 }
 

@@ -69,7 +69,6 @@ void Desktronic::read_remote_uart()
     while (remote_uart_->available())
     {
         remote_uart_->read_byte(&byte);
-        ESP_LOGE(TAG, "remote byte: %02x", byte);
 
         // is it a rx-message?
         if (!remote_rx_)
@@ -110,10 +109,13 @@ void Desktronic::read_remote_uart()
 
 void Desktronic::read_desk_uart()
 {
+    ESP_LOGV(TAG, "-1");
     if (desk_uart_ == nullptr)
     {
         return;
     }
+
+    ESP_LOGV(TAG, "0");
 
     uint8_t byte;
     while (desk_uart_->available())
@@ -130,6 +132,7 @@ void Desktronic::read_desk_uart()
             desk_rx_ = true;
             continue;
         }
+        ESP_LOGV(TAG, "1");
 
         desk_buffer_.push_back(byte);
         // -1, because of the start byte
@@ -140,7 +143,7 @@ void Desktronic::read_desk_uart()
 
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
-
+        ESP_LOGV(TAG, "2");
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
@@ -149,7 +152,7 @@ void Desktronic::read_desk_uart()
 
             continue;
         }
-
+        ESP_LOGV(TAG, "3");
         if (height_sensor_ != nullptr)
         {
             if (data[3] != 0x01)
@@ -163,6 +166,7 @@ void Desktronic::read_desk_uart()
             {
                 break;
             }
+            ESP_LOGV(TAG, "7");
 
             const int data0 = segment_to_number(data[0]);
             const int data1 = segment_to_number(data[1] - 0x80);
@@ -171,6 +175,7 @@ void Desktronic::read_desk_uart()
             {
                 break;
             }
+            ESP_LOGV(TAG, "4");
 
             float height = segment_to_number(data[0]) * 100 + segment_to_number(data[1]) * 10 + segment_to_number(data[2]);
             // if (data[1] & 0x80)
@@ -180,6 +185,8 @@ void Desktronic::read_desk_uart()
             ESP_LOGV(TAG, "made it. height: %f", height);
             height_sensor_->publish_state(height);
         }
+
+        ESP_LOGV(TAG, "5");
 
         desk_buffer_.clear();
     }

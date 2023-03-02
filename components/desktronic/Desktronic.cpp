@@ -127,7 +127,9 @@ void Desktronic::read_desk_uart()
                 continue;
             }
 
+            desk_buffer_.clear();
             desk_rx_ = true;
+
             continue;
         }
 

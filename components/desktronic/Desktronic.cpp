@@ -118,6 +118,7 @@ void Desktronic::read_desk_uart()
     while (desk_uart_->available())
     {
         desk_uart_->read_byte(&byte);
+        ESP_LOGE(TAG, "byte: %02x", byte);
 
         if (!desk_rx_)
         {

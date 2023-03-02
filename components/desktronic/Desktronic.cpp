@@ -8,9 +8,9 @@ namespace desktronic
 
 static const char* TAG = "desktronic";
 static const uint8_t REMOTE_UART_MESSAGE_LENGTH = 5U;
-static const uint8_t REMOTE_UART_MESSAGE_START = 0xA5;
+static const uint8_t REMOTE_UART_MESSAGE_START = 0xa5;
 static const uint8_t DESK_UART_MESSAGE_LENGTH = 6U;
-static const uint8_t DESK_UART_MESSAGE_START = 0x5A;
+static const uint8_t DESK_UART_MESSAGE_START = 0x5a;
 
 const char* desktronic_operation_to_string(const DesktronicOperation operation)
 {
@@ -83,6 +83,8 @@ void Desktronic::read_remote_uart()
         }
 
         remote_buffer_.push_back(byte);
+        ESP_LOGE(TAG, "remote_buffer_.size(): %d", remote_buffer_.size());
+
         // -1, because of the start byte
         // important for the right order of the bytes
         if (remote_buffer_.size() < REMOTE_UART_MESSAGE_LENGTH - 1)
@@ -127,10 +129,7 @@ void Desktronic::read_desk_uart()
                 continue;
             }
 
-            desk_buffer_.clear();
-            desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
             desk_rx_ = true;
-
             continue;
         }
 
@@ -139,7 +138,7 @@ void Desktronic::read_desk_uart()
 
         // -1, because of the start byte
         // ESP_LOGE(TAG, "iiii");
-        if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
+        if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH)
         {
             continue;
         }
@@ -166,8 +165,6 @@ void Desktronic::read_desk_uart()
             if (data[3] != 0x01)
             {
                 ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
-                desk_buffer_.clear();
-                desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
                 break;
             }
 
@@ -176,8 +173,6 @@ void Desktronic::read_desk_uart()
             // @question: no really sure what this is
             if ((data[0] | data[1] | data[2]) == 0x00)
             {
-                desk_buffer_.clear();
-                desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
                 break;
             }
 
@@ -205,7 +200,6 @@ void Desktronic::read_desk_uart()
         ESP_LOGE(TAG, "5");
 
         desk_buffer_.clear();
-        desk_buffer_.resize(DESK_UART_MESSAGE_LENGTH - 1);
     }
 }
 

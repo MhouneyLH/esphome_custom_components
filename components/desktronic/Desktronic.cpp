@@ -132,7 +132,10 @@ void Desktronic::read_desk_uart()
         }
 
         desk_buffer_.push_back(byte);
-        ESP_LOGE(TAG, "fiiirst: %02x %02x %02x %02x %02x", desk_buffer_.at(desk_buffer_.size() - 1));
+        for (int i = 0; i < desk_buffer_.size(); i++)
+        {
+            ESP_LOGE(TAG, "fiiirst: %02x", desk_buffer_.at(i));
+        }
         // -1, because of the start byte
         // ESP_LOGE(TAG, "iiii");
         if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)

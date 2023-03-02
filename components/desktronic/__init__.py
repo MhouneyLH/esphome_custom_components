@@ -1,54 +1,64 @@
-import esphome.codegen as codegen
-import esphome.config_validation as config_validation
-from esphome import pins
-from esphome.components import uart
-from esphome.components import sensor
-from esphome.const import CONF_ID, CONF_HEIGHT, CONF_TIMEOUT, ICON_GAUGE
+import esphome.codegen as cg
+import esphome.config_validation as cv
+from esphome.components import binary_sensor, sensor, uart
+from esphome.const import CONF_ID, CONF_HEIGHT
 
 DEPENDENCIES = ['uart']
-AUTO_LOAD = ['sensor']
 
-desktronic_ns = codegen.esphome_ns.namespace('desktronic')
-Desktronic = desktronic_ns.class_('Desktronic', codegen.Component, uart.UARTDevice)
+AUTO_LOAD = ['sensor', 'binary_sensor']
 
+desktronic_ns = cg.esphome_ns.namespace('desktronic')
+
+Desktronic = desktronic_ns.class_('Desktronic', cg.Component)
+
+CONF_REMOTE_UART = "remote_uart"
+CONF_DESK_UART = "desk_uart"
 CONF_UP = "up"
 CONF_DOWN = "down"
-CONF_REQUEST = "request"
-CONF_STOPPING_DISTANCE = "stopping_distance"
-DEFAULT_STOPPING_DISTANCE = 15
+CONF_MEMORY1 = "memory1"
+CONF_MEMORY2 = "memory2"
+CONF_MEMORY3 = "memory3"
 
-CONFIG_SCHEMA = config_validation.COMPONENT_SCHEMA.extend({
-    config_validation.GenerateID(): config_validation.declare_id(Desktronic),
-    config_validation.Optional(CONF_UP): pins.gpio_output_pin_schema,
-    config_validation.Optional(CONF_DOWN): pins.gpio_output_pin_schema,
-    config_validation.Optional(CONF_REQUEST): pins.gpio_output_pin_schema,
-    config_validation.Optional(CONF_HEIGHT): sensor.sensor_schema(icon=ICON_GAUGE, accuracy_decimals=1),
-    config_validation.Optional(CONF_STOPPING_DISTANCE, default=DEFAULT_STOPPING_DISTANCE): config_validation.positive_int,
-    config_validation.Optional(CONF_TIMEOUT): config_validation.time_period,
-}).extend(uart.UART_DEVICE_SCHEMA)
+CONFIG_SCHEMA = cv.COMPONENT_SCHEMA.extend({
+    cv.GenerateID(): cv.declare_id(Desktronic),
+    cv.Optional(CONF_REMOTE_UART): cv.use_id(uart.UARTComponent),
+    cv.Optional(CONF_DESK_UART): cv.use_id(uart.UARTComponent),
+    cv.Optional(CONF_HEIGHT): sensor.sensor_schema(
+        accuracy_decimals = 1
+    ),
+    cv.Optional(CONF_UP): binary_sensor.binary_sensor_schema(),
+    cv.Optional(CONF_DOWN): binary_sensor.binary_sensor_schema(),
+    cv.Optional(CONF_MEMORY1): binary_sensor.binary_sensor_schema(),
+    cv.Optional(CONF_MEMORY2): binary_sensor.binary_sensor_schema(),
+    cv.Optional(CONF_MEMORY3): binary_sensor.binary_sensor_schema(),
+})
+
 
 async def to_code(config):
-    global sensor
+    var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(var, config)
 
-    var = codegen.new_Pvariable(config[CONF_ID])
-    await codegen.register_component(var, config)
-    await uart.register_uart_device(var, config)
-
-    if CONF_UP in config:
-        pin = await codegen.gpio_pin_expression(config[CONF_UP])
-        codegen.add(var.set_up_pin(pin))
-    if CONF_DOWN in config:
-        pin = await codegen.gpio_pin_expression(config[CONF_DOWN])
-        codegen.add(var.set_down_pin(pin))
-    if CONF_REQUEST in config:
-        pin = await codegen.gpio_pin_expression(config[CONF_REQUEST])
-        codegen.add(var.set_request_pin(pin))
+    if CONF_REMOTE_UART in config:
+        remote_uart = await cg.get_variable(config[CONF_REMOTE_UART])
+        cg.add(var.set_remote_uart(remote_uart))
+    if CONF_DESK_UART in config:
+        desk_uart = await cg.get_variable(config[CONF_DESK_UART])
+        cg.add(var.set_desk_uart(desk_uart))
     if CONF_HEIGHT in config:
-        sensor = await sensor.new_sensor(config[CONF_HEIGHT])
-        codegen.add(var.set_height_sensor(sensor))
-
-    # don't have to check if it's in config, because it has a default value
-    codegen.add(var.set_stopping_distance(config[CONF_STOPPING_DISTANCE]))
-
-    if CONF_TIMEOUT in config:
-        codegen.add(var.set_timeout(config[CONF_TIMEOUT].total_milliseconds))
+        sens = await sensor.new_sensor(config[CONF_HEIGHT])
+        cg.add(var.set_height_sensor(sens))
+    if CONF_UP in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_UP])
+        cg.add(var.set_up_bsensor(sens))
+    if CONF_DOWN in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_DOWN])
+        cg.add(var.set_down_bsensor(sens))
+    if CONF_MEMORY1 in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_MEMORY1])
+        cg.add(var.set_memory1_bsensor(sens))
+    if CONF_MEMORY2 in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_MEMORY2])
+        cg.add(var.set_memory2_bsensor(sens))
+    if CONF_MEMORY3 in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_MEMORY3])
+        cg.add(var.set_memory3_bsensor(sens))

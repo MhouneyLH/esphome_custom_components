@@ -52,7 +52,7 @@ static int segment_to_number(const uint8_t segment)
     case SEGMENT_9:
         return 9;
     default:
-        ESP_LOGV(TAG, "unknown digit: %02f", segment & 0x7f);
+        ESP_LOGE(TAG, "unknown digit: %02f", segment & 0x7f);
     }
 
     return -1;
@@ -109,13 +109,13 @@ void Desktronic::read_remote_uart()
 
 void Desktronic::read_desk_uart()
 {
-    ESP_LOGV(TAG, "-1");
+    ESP_LOGE(TAG, "-1");
     if (desk_uart_ == nullptr)
     {
         return;
     }
 
-    ESP_LOGV(TAG, "0");
+    ESP_LOGE(TAG, "0");
 
     uint8_t byte;
     while (desk_uart_->available())
@@ -132,7 +132,7 @@ void Desktronic::read_desk_uart()
             desk_rx_ = true;
             continue;
         }
-        ESP_LOGV(TAG, "1");
+        ESP_LOGE(TAG, "1");
 
         desk_buffer_.push_back(byte);
         // -1, because of the start byte
@@ -143,7 +143,7 @@ void Desktronic::read_desk_uart()
 
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
-        ESP_LOGV(TAG, "2");
+        ESP_LOGE(TAG, "2");
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
@@ -152,12 +152,12 @@ void Desktronic::read_desk_uart()
 
             continue;
         }
-        ESP_LOGV(TAG, "3");
+        ESP_LOGE(TAG, "3");
         if (height_sensor_ != nullptr)
         {
             if (data[3] != 0x01)
             {
-                ESP_LOGV(TAG, "unknown message type %02x must be 0x01", data[3]);
+                ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
                 break;
             }
 
@@ -166,7 +166,7 @@ void Desktronic::read_desk_uart()
             {
                 break;
             }
-            ESP_LOGV(TAG, "7");
+            ESP_LOGE(TAG, "7");
 
             const int data0 = segment_to_number(data[0]);
             const int data1 = segment_to_number(data[1] - 0x80);
@@ -175,18 +175,18 @@ void Desktronic::read_desk_uart()
             {
                 break;
             }
-            ESP_LOGV(TAG, "4");
+            ESP_LOGE(TAG, "4");
 
             float height = segment_to_number(data[0]) * 100 + segment_to_number(data[1]) * 10 + segment_to_number(data[2]);
             // if (data[1] & 0x80)
             // {
             //     height /= 10.0;
             // }
-            ESP_LOGV(TAG, "made it. height: %f", height);
+            ESP_LOGE(TAG, "made it. height: %f", height);
             height_sensor_->publish_state(height);
         }
 
-        ESP_LOGV(TAG, "5");
+        ESP_LOGE(TAG, "5");
 
         desk_buffer_.clear();
     }
@@ -218,9 +218,9 @@ void Desktronic::publish_remote_states(const uint8_t data)
 
 void Desktronic::loop()
 {
-    ESP_LOGV(TAG, "hhhhh");
+    ESP_LOGE(TAG, "hhhhh");
     read_remote_uart();
-    ESP_LOGV(TAG, "jjjjj");
+    ESP_LOGE(TAG, "jjjjj");
     read_desk_uart();
 }
 

@@ -69,6 +69,7 @@ void Desktronic::read_remote_uart()
     while (remote_uart_->available())
     {
         remote_uart_->read_byte(&byte);
+        ESP_LOGE(TAG, "remote byte: %02x", byte);
 
         // is it a rx-message?
         if (!remote_rx_)
@@ -93,7 +94,6 @@ void Desktronic::read_remote_uart()
         uint8_t* data = remote_buffer_.data();
 
         uint8_t checksum = data[2] + data[3];
-        ESP_LOGE(TAG, "haldajsflkjasdfasjfaskdfsdj %02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
         if (checksum != data[4])
         {
             ESP_LOGE(TAG, "remote checksum mismatch: %02x != %02x", checksum, data[3]);

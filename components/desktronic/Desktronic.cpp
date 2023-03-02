@@ -85,6 +85,7 @@ void Desktronic::read_remote_uart()
 
         remote_buffer_.push_back(byte);
         // -1, because of the start byte
+        // important for the right order of the bytes
         if (remote_buffer_.size() < REMOTE_UART_MESSAGE_LENGTH - 1)
         {
             continue;
@@ -93,12 +94,10 @@ void Desktronic::read_remote_uart()
         remote_rx_ = false;
         uint8_t* data = remote_buffer_.data();
 
-        ESP_LOGE(TAG, "remote data: %02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
-
-        const uint8_t checksum = data[2] + data[3];
-        if (data[2] + data[3] != data[4])
+        const uint8_t checksum = data[1] + data[2];
+        if (checksum != data[3])
         {
-            ESP_LOGE(TAG, "remote checksum mismatch: %02x != %02x", checksum, data[3]);
+            ESP_LOGE(TAG, "remote checksum mismatch: %02x (calculated checksum) != %02x (actual checksum)", checksum, data[3]);
             remote_buffer_.clear();
 
             continue;

@@ -97,7 +97,7 @@ void Desktronic::read_remote_uart()
         if (checksum != data[4])
         {
             ESP_LOGE(TAG, "remote checksum mismatch: %02x != %02x", checksum, data[3]);
-            desk_buffer_.clear();
+            remote_buffer_.clear();
 
             continue;
         }

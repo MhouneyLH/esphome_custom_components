@@ -70,7 +70,8 @@ void Desktronic::read_remote_uart()
     {
         remote_uart_->read_byte(&byte);
 
-        // is it a rx-message?
+        // are we at the first-message and have to filter
+        // some unnecessary bytes before the actual REMOTE_UART_MESSAGE_START?
         if (!remote_rx_)
         {
             if (byte != REMOTE_UART_MESSAGE_START)
@@ -119,8 +120,9 @@ void Desktronic::read_desk_uart()
     while (desk_uart_->available())
     {
         desk_uart_->read_byte(&byte);
-        ESP_LOGE(TAG, "byte: %02x", byte);
 
+        // are we at the first-message and have to filter
+        // some unnecessary bytes before the actual DESK_UART_MESSAGE_START?
         if (!desk_rx_)
         {
             if (byte != DESK_UART_MESSAGE_START)
@@ -136,10 +138,9 @@ void Desktronic::read_desk_uart()
         }
 
         desk_buffer_.push_back(byte);
-        ESP_LOGE(TAG, "desk_buffer_.size(): %d", desk_buffer_.size());
 
         // -1, because of the start byte
-        // ESP_LOGE(TAG, "iiii");
+        // important for the right order of the bytes
         if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
         {
             continue;
@@ -147,9 +148,7 @@ void Desktronic::read_desk_uart()
 
         desk_rx_ = false;
         uint8_t* data = desk_buffer_.data();
-        ESP_LOGE(TAG, "befoore: %02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
 
-        // ESP_LOGE(TAG, "kkkk");
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
@@ -160,47 +159,38 @@ void Desktronic::read_desk_uart()
             continue;
         }
 
-        // ESP_LOGE(TAG, "rrrr");
-
         if (height_sensor_ != nullptr)
         {
-            // ESP_LOGE(TAG, "uuuu");
             if (data[3] != 0x01)
             {
                 ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
                 break;
             }
 
-            // ESP_LOGE(TAG, "ffff");
             ESP_LOGE(TAG, "%02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
-            // @question: no really sure what this is
             if ((data[0] | data[1] | data[2]) == 0x00)
             {
                 break;
             }
 
-            ESP_LOGE(TAG, "gggg");
             const int data0 = segment_to_number(data[0]);
-            const int data1 = segment_to_number(data[1] - 0x80);
+            const int data1 = segment_to_number(data[1]);
             const int data2 = segment_to_number(data[2]);
-            ESP_LOGE(TAG, "%02x %02x %02x", data0, data1, data2);
 
             if (data0 < 0x00 || data1 < 0x00 || data2 < 0x00)
             {
                 break;
             }
-            ESP_LOGE(TAG, "4");
 
             float height = segment_to_number(data[0]) * 100 + segment_to_number(data[1]) * 10 + segment_to_number(data[2]);
-            // if (data[1] & 0x80)
-            // {
-            //     height /= 10.0;
-            // }
+            if (data[1] & 0x80)
+            {
+                height /= 10.0;
+            }
+
             ESP_LOGE(TAG, "made it. height: %f", height);
             height_sensor_->publish_state(height);
         }
-
-        ESP_LOGE(TAG, "5");
 
         desk_buffer_.clear();
         desk_buffer_.resize(0);

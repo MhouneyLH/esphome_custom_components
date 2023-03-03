@@ -83,7 +83,6 @@ void Desktronic::read_remote_uart()
         }
 
         remote_buffer_.push_back(byte);
-        ESP_LOGE(TAG, "remote_buffer_.size(): %d", remote_buffer_.size());
 
         // -1, because of the start byte
         // important for the right order of the bytes
@@ -129,6 +128,9 @@ void Desktronic::read_desk_uart()
                 continue;
             }
 
+            desk_buffer_.clear();
+            desk_buffer_.resize(0);
+
             desk_rx_ = true;
             continue;
         }
@@ -138,7 +140,7 @@ void Desktronic::read_desk_uart()
 
         // -1, because of the start byte
         // ESP_LOGE(TAG, "iiii");
-        if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH)
+        if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
         {
             continue;
         }
@@ -153,6 +155,7 @@ void Desktronic::read_desk_uart()
         {
             ESP_LOGE(TAG, "desk checksum mismatch: %02x != %02x", checksum, data[4]);
             desk_buffer_.clear();
+            desk_buffer_.resize(0);
 
             continue;
         }
@@ -200,6 +203,7 @@ void Desktronic::read_desk_uart()
         ESP_LOGE(TAG, "5");
 
         desk_buffer_.clear();
+        desk_buffer_.resize(0);
     }
 }
 

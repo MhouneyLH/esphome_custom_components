@@ -292,7 +292,7 @@ void Desktronic::move_up()
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
 
-    if (current_height_ == target_height_)
+    if (current_height_ == target_height_ - 1.0 || current_height_ == target_height_ + 1.0)
     {
         ESP_LOGE(TAG, "Moving: Up was finished");
         up_pin_->digital_write(false);
@@ -327,7 +327,7 @@ void Desktronic::move_down()
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
 
-    if (current_height_ == target_height_)
+    if (current_height_ == target_height_ - 1.0 || current_height_ == target_height_ + 1.0)
     {
         ESP_LOGE(TAG, "Moving: Down was finished");
         up_pin_->digital_write(false);

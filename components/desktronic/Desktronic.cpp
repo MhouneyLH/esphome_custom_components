@@ -7,10 +7,12 @@ namespace desktronic
 {
 
 static const char* TAG = "desktronic";
-static const unsigned int UART_MESSAGE_LENGTH = 6U;
-static const uint8_t UART_MESSAGE_START = 0x5A;
+static const uint8_t REMOTE_UART_MESSAGE_LENGTH = 5U;
+static const uint8_t REMOTE_UART_MESSAGE_START = 0xa5;
+static const uint8_t DESK_UART_MESSAGE_LENGTH = 6U;
+static const uint8_t DESK_UART_MESSAGE_START = 0x5a;
 
-const char* desktronicOperationToString(const DesktronicOperation operation)
+const char* desktronic_operation_to_string(const DesktronicOperation operation)
 {
     switch (operation)
     {
@@ -25,233 +27,215 @@ const char* desktronicOperationToString(const DesktronicOperation operation)
     }
 }
 
-void Desktronic::setup()
+static int segment_to_number(const uint8_t segment)
 {
-    if (up_pin_)
+    switch (segment & 0x7f)
     {
-        up_pin_->digital_write(false);
+    case SEGMENT_0:
+        return 0;
+    case SEGMENT_1:
+        return 1;
+    case SEGMENT_2:
+        return 2;
+    case SEGMENT_3:
+        return 3;
+    case SEGMENT_4:
+        return 4;
+    case SEGMENT_5:
+        return 5;
+    case SEGMENT_6:
+        return 6;
+    case SEGMENT_7:
+        return 7;
+    case SEGMENT_8:
+        return 8;
+    case SEGMENT_9:
+        return 9;
+    default:
+        ESP_LOGE(TAG, "unknown digit: %02f", segment & 0x7f);
     }
 
-    if (down_pin_)
+    return -1;
+}
+
+void Desktronic::read_remote_uart()
+{
+    if (remote_uart_ == nullptr)
     {
-        down_pin_->digital_write(false);
+        return;
     }
 
-    if (request_pin_)
+    uint8_t byte;
+    while (remote_uart_->available())
     {
-        request_pin_->digital_write(true);
-        request_time_ = esphome::millis();
+        remote_uart_->read_byte(&byte);
+
+        // are we at the first-message and have to filter
+        // some unnecessary bytes before the actual REMOTE_UART_MESSAGE_START?
+        if (!remote_rx_)
+        {
+            if (byte != REMOTE_UART_MESSAGE_START)
+            {
+                continue;
+            }
+
+            remote_rx_ = true;
+            continue;
+        }
+
+        remote_buffer_.push_back(byte);
+
+        // -1, because of the start byte
+        // important for the right order of the bytes
+        if (remote_buffer_.size() < REMOTE_UART_MESSAGE_LENGTH - 1)
+        {
+            continue;
+        }
+
+        remote_rx_ = false;
+        uint8_t* data = remote_buffer_.data();
+
+        const uint8_t checksum = data[1] + data[2];
+        if (checksum != data[3])
+        {
+            ESP_LOGE(TAG, "remote checksum mismatch: %02x (calculated checksum) != %02x (actual checksum)", checksum, data[3]);
+            remote_buffer_.clear();
+
+            continue;
+        }
+
+        publish_remote_states(data[1]);
+        remote_buffer_.clear();
+    }
+}
+
+void Desktronic::read_desk_uart()
+{
+    if (desk_uart_ == nullptr)
+    {
+        return;
+    }
+
+    uint8_t byte;
+    while (desk_uart_->available())
+    {
+        desk_uart_->read_byte(&byte);
+
+        // are we at the first-message and have to filter
+        // some unnecessary bytes before the actual DESK_UART_MESSAGE_START?
+        if (!desk_rx_)
+        {
+            if (byte != DESK_UART_MESSAGE_START)
+            {
+                continue;
+            }
+
+            desk_buffer_.clear();
+            desk_buffer_.resize(0);
+
+            desk_rx_ = true;
+            continue;
+        }
+
+        desk_buffer_.push_back(byte);
+
+        // -1, because of the start byte
+        // important for the right order of the bytes
+        if (desk_buffer_.size() < DESK_UART_MESSAGE_LENGTH - 1)
+        {
+            continue;
+        }
+
+        desk_rx_ = false;
+        uint8_t* data = desk_buffer_.data();
+
+        const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
+        if (checksum != data[4])
+        {
+            ESP_LOGE(TAG, "desk checksum mismatch: %02x != %02x", checksum, data[4]);
+            desk_buffer_.clear();
+            desk_buffer_.resize(0);
+
+            continue;
+        }
+
+        if (height_sensor_ != nullptr)
+        {
+            if (data[3] != 0x01)
+            {
+                ESP_LOGE(TAG, "unknown message type %02x must be 0x01", data[3]);
+                break;
+            }
+
+            ESP_LOGE(TAG, "%02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
+            if ((data[0] | data[1] | data[2]) == 0x00)
+            {
+                break;
+            }
+
+            const int data0 = segment_to_number(data[0]);
+            const int data1 = segment_to_number(data[1]);
+            const int data2 = segment_to_number(data[2]);
+
+            if (data0 < 0x00 || data1 < 0x00 || data2 < 0x00)
+            {
+                break;
+            }
+
+            float height = segment_to_number(data[0]) * 100 + segment_to_number(data[1]) * 10 + segment_to_number(data[2]);
+            if (data[1] & 0x80)
+            {
+                height /= 10.0;
+            }
+
+            ESP_LOGE(TAG, "made it. height: %f", height);
+            height_sensor_->publish_state(height);
+        }
+
+        desk_buffer_.clear();
+        desk_buffer_.resize(0);
+    }
+}
+
+void Desktronic::publish_remote_states(const uint8_t data)
+{
+    if (up_bsensor_ != nullptr)
+    {
+        up_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_UP);
+    }
+    if (down_bsensor_ != nullptr)
+    {
+        down_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_DOWN);
+    }
+    if (memory1_bsensor_ != nullptr)
+    {
+        memory1_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_1);
+    }
+    if (memory2_bsensor_ != nullptr)
+    {
+        memory2_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_2);
+    }
+    if (memory3_bsensor_ != nullptr)
+    {
+        memory3_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_3);
     }
 }
 
 void Desktronic::loop()
 {
-    static int bytePositionInUARTMessage = 0;
-    static double height = 0.0;
-    bool beginning_skipping_garbage_bytes = true;
-
-    while (esphome::uart::UARTDevice::available())
-    {
-        uint8_t byte;
-        esphome::uart::UARTDevice::read_byte(&byte);
-
-        if (beginning_skipping_garbage_bytes)
-        {
-            if (is_skipping_garbage_byte(byte))
-            {
-                continue;
-            }
-            else
-            {
-                beginning_skipping_garbage_bytes = false;
-                bytePositionInUARTMessage = 0;
-                height = 0.0;
-            }
-        }
-
-        handle_byte(byte, bytePositionInUARTMessage, height);
-    }
+    read_remote_uart();
+    read_desk_uart();
 }
 
-void Desktronic::setLogConfig()
+void Desktronic::dump_config()
 {
-    ESP_LOGCONFIG(TAG, "DesktronicDesk:");
-
+    ESP_LOGCONFIG(TAG, "Desktronic Desk");
     LOG_SENSOR("", "Height", height_sensor_);
-    LOG_PIN("UpPin: ", up_pin_);
-    LOG_PIN("DownPin: ", down_pin_);
-    LOG_PIN("RequestPin: ", request_pin_);
-}
-
-void Desktronic::move_to_position(const int targetPosition)
-{
-    if (abs(targetPosition - current_pos_) < stopping_distance_)
-    {
-        return;
-    }
-
-    if (targetPosition > current_pos_)
-    {
-        if (!up_pin_)
-        {
-            return;
-        }
-        up_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_RAISING;
-    }
-    else
-    {
-        if (!down_pin_)
-        {
-            return;
-        }
-
-        down_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_LOWERING;
-    }
-
-    target_pos_ = targetPosition;
-
-    if (timeout_ >= 0)
-    {
-        start_time_ = esphome::millis();
-    }
-}
-
-void Desktronic::stop()
-{
-    target_pos_ = -1;
-
-    if (up_pin_)
-    {
-        up_pin_->digital_write(false);
-    }
-
-    if (down_pin_)
-    {
-        down_pin_->digital_write(false);
-    }
-
-    current_operation = DESKTRONIC_OPERATION_IDLE;
-}
-
-int Desktronic::get_tens_digit(const uint8_t byte)
-{
-    switch (byte)
-    {
-    case Tens::TENS_70:
-        return 70;
-    case Tens::TENS_80:
-        return 80;
-    case Tens::TENS_90:
-        return 90;
-    case Tens::TENS_100:
-        return 100;
-    default:
-        return -1;
-    }
-}
-
-int Desktronic::get_units_digit(const uint8_t byte)
-{
-    switch (byte)
-    {
-    case Units::UNITS_0:
-        return 0;
-    case Units::UNITS_1:
-        return 1;
-    case Units::UNITS_2:
-        return 2;
-    case Units::UNITS_3:
-        return 3;
-    case Units::UNITS_4:
-        return 4;
-    case Units::UNITS_5:
-        return 5;
-    case Units::UNITS_6:
-        return 6;
-    case Units::UNITS_7:
-        return 7;
-    case Units::UNITS_8:
-        return 8;
-    case Units::UNITS_9:
-        return 9;
-    default:
-        return -1;
-    }
-}
-
-double Desktronic::get_first_decimal_digit(const uint8_t byte)
-{
-    switch (byte)
-    {
-    case FirstDecimal::DECIMAL_0:
-        return 0.0;
-    case FirstDecimal::DECIMAL_1:
-        return 0.1;
-    case FirstDecimal::DECIMAL_2:
-        return 0.2;
-    case FirstDecimal::DECIMAL_3:
-        return 0.3;
-    case FirstDecimal::DECIMAL_4:
-        return 0.4;
-    case FirstDecimal::DECIMAL_5:
-        return 0.5;
-    case FirstDecimal::DECIMAL_6:
-        return 0.6;
-    case FirstDecimal::DECIMAL_7:
-        return 0.7;
-    case FirstDecimal::DECIMAL_8:
-        return 0.8;
-    case FirstDecimal::DECIMAL_9:
-        return 0.9;
-    default:
-        return -1.0;
-    }
-}
-
-bool Desktronic::is_skipping_garbage_byte(const uint8_t byte)
-{
-    return byte != UART_MESSAGE_START;
-}
-
-void Desktronic::handle_byte(const uint8_t byte, int& bytePosition, double& height)
-{
-    switch (bytePosition)
-    {
-    case 0:
-        bytePosition = 1;
-        break;
-    case 1:
-        height += get_tens_digit(byte);
-        bytePosition = 2;
-        break;
-    case 2:
-        height += get_units_digit(byte);
-        bytePosition = 3;
-        break;
-    case 3:
-        height += get_first_decimal_digit(byte);
-        bytePosition = 4;
-        break;
-    case 4:
-        bytePosition = 5;
-        break;
-    case 5:
-        current_pos_ = height;
-        if (height_sensor_)
-        {
-            // accuracy is set in __init__.py
-            height_sensor_->publish_state(height);
-        }
-
-        bytePosition = 0;
-        height = 0.0;
-
-        break;
-    default:
-        break;
-    }
+    LOG_BINARY_SENSOR("  ", "Up", up_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Down", down_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory1", memory1_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory2", memory2_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory3", memory3_bsensor_);
 }
 
 } // namespace desktronic

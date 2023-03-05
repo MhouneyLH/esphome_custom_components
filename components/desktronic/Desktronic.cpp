@@ -94,37 +94,17 @@ void Desktronic::move_to(const float height_in_cm)
         ESP_LOGE(TAG, "Moving: Up");
         move_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_RAISING;
-
-        while (height_in_cm < current_height_)
-        {
-            if (!remote_uart_->available())
-            {
-                continue;
-            }
-
-            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
-        }
     }
     else
     {
         ESP_LOGE(TAG, "Moving: Down");
         move_pin_->digital_write(true);
         current_operation = DESKTRONIC_OPERATION_LOWERING;
-
-        while (height_in_cm > current_height_)
-        {
-            if (!remote_uart_->available())
-            {
-                continue;
-            }
-
-            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
-        }
     }
 
     ESP_LOGE(TAG, "Moving: Finished");
-    move_pin_->digital_write(false);
-    current_operation = DESKTRONIC_OPERATION_RAISING;
+    // move_pin_->digital_write(false);
+    current_operation = DESKTRONIC_OPERATION_IDLE;
 }
 
 void Desktronic::read_remote_uart()
@@ -291,7 +271,7 @@ void Desktronic::publish_remote_states(const uint8_t data)
 
 bool Desktronic::must_move_up(const float height_in_cm)
 {
-    return height_in_cm < current_height_;
+    return current_height_ < height_in_cm;
 }
 
 void Desktronic::loop()

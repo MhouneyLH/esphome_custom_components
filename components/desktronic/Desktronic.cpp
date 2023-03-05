@@ -11,6 +11,8 @@ static const uint8_t REMOTE_UART_MESSAGE_LENGTH = 5U;
 static const uint8_t REMOTE_UART_MESSAGE_START = 0xa5;
 static const uint8_t DESK_UART_MESSAGE_LENGTH = 6U;
 static const uint8_t DESK_UART_MESSAGE_START = 0x5a;
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_UP = new uint8_t[5]{0xA5, 0x00, 0x20, 0xdf, 0xff};
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_DOWN = new uint8_t[5]{0xA5, 0x00, 0x40, 0xdf, 0xff};
 
 const char* desktronic_operation_to_string(const DesktronicOperation operation)
 {
@@ -81,6 +83,32 @@ void Desktronic::move_to(const float height_in_cm)
     }
 
     ESP_LOGE(TAG, "current_height: %f cm", current_height_);
+    if (must_move_up(height_in_cm))
+    {
+        ESP_LOGE(TAG, "Moving: Up");
+        move_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_RAISING;
+
+        while (height_in_cm < current_height_)
+        {
+            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
+        }
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Moving: Down");
+        move_pin_->digital_write(true);
+        current_operation = DESKTRONIC_OPERATION_LOWERING;
+
+        while (height_in_cm > current_height_)
+        {
+            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
+        }
+    }
+
+    ESP_LOGE(TAG, "Moving: Finished");
+    move_pin_->digital_write(false);
+    current_operation = DESKTRONIC_OPERATION_RAISING;
 }
 
 void Desktronic::read_remote_uart()
@@ -243,6 +271,11 @@ void Desktronic::publish_remote_states(const uint8_t data)
     {
         memory3_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_3);
     }
+}
+
+bool Desktronic::must_move_up(const float height_in_cm)
+{
+    return height_in_cm < current_height_;
 }
 
 void Desktronic::loop()

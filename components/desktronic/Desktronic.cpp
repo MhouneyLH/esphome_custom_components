@@ -11,8 +11,9 @@ static const uint8_t REMOTE_UART_MESSAGE_LENGTH = 5U;
 static const uint8_t REMOTE_UART_MESSAGE_START = 0xa5;
 static const uint8_t DESK_UART_MESSAGE_LENGTH = 6U;
 static const uint8_t DESK_UART_MESSAGE_START = 0x5a;
-static const uint8_t* REMOTE_UART_MESSAGE_MOVE_UP = new uint8_t[5]{0xA5, 0x00, 0x20, 0xdf, 0xff};
-static const uint8_t* REMOTE_UART_MESSAGE_MOVE_DOWN = new uint8_t[5]{0xA5, 0x00, 0x40, 0xdf, 0xff};
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_UP = new uint8_t[5]{0xa5, 0x00, 0x20, 0xdf, 0xff};
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_DOWN = new uint8_t[5]{0xa5, 0x00, 0x40, 0xbf, 0xff};
+static const float REMOTE_UART_STOPPING_DISTANCE = 0.3;
 
 const char* desktronic_operation_to_string(const DesktronicOperation operation)
 {
@@ -292,7 +293,8 @@ void Desktronic::move_up()
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
 
-    if (current_height_ == target_height_ - 1.0 || current_height_ == target_height_ + 1.0)
+    if (current_height_ >= target_height_ - REMOTE_UART_STOPPING_DISTANCE &&
+        current_height_ <= target_height_ + REMOTE_UART_STOPPING_DISTANCE)
     {
         ESP_LOGE(TAG, "Moving: Up was finished");
         up_pin_->digital_write(false);
@@ -327,7 +329,8 @@ void Desktronic::move_down()
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
 
-    if (current_height_ == target_height_ - 1.0 || current_height_ == target_height_ + 1.0)
+    if (current_height_ >= target_height_ - REMOTE_UART_STOPPING_DISTANCE &&
+        current_height_ <= target_height_ + REMOTE_UART_STOPPING_DISTANCE)
     {
         ESP_LOGE(TAG, "Moving: Down was finished");
         up_pin_->digital_write(false);

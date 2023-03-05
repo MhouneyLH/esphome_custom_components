@@ -82,6 +82,12 @@ void Desktronic::move_to(const float height_in_cm)
         return;
     }
 
+    if (remote_uart_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Remote UART is not configured");
+        return;
+    }
+
     ESP_LOGE(TAG, "current_height: %f cm", current_height_);
     if (must_move_up(height_in_cm))
     {
@@ -91,6 +97,11 @@ void Desktronic::move_to(const float height_in_cm)
 
         while (height_in_cm < current_height_)
         {
+            if (!remote_uart_->available())
+            {
+                continue;
+            }
+
             remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
         }
     }
@@ -102,6 +113,11 @@ void Desktronic::move_to(const float height_in_cm)
 
         while (height_in_cm > current_height_)
         {
+            if (!remote_uart_->available())
+            {
+                continue;
+            }
+
             remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
         }
     }

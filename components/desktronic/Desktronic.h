@@ -71,7 +71,10 @@ private:
     void read_desk_uart();
 
     void publish_remote_states(const uint8_t data);
-    bool must_move_up(const float height_in_cm); 
+    bool must_move_up(const float height_in_cm);
+
+    void move_up();
+    void move_down();
 
 protected:
     uart::UARTComponent* remote_uart_{nullptr};

@@ -76,35 +76,8 @@ void Desktronic::move_to(const float height_in_cm)
         return;
     }
 
-    if (move_pin_ == nullptr)
-    {
-        ESP_LOGE(TAG, "Moving: Move pin is not configured");
-        return;
-    }
-
-    if (remote_uart_ == nullptr)
-    {
-        ESP_LOGE(TAG, "Moving: Remote UART is not configured");
-        return;
-    }
-
-    ESP_LOGE(TAG, "current_height: %f cm", current_height_);
-    if (must_move_up(height_in_cm))
-    {
-        ESP_LOGE(TAG, "Moving: Up");
-        move_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_RAISING;
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Moving: Down");
-        move_pin_->digital_write(true);
-        current_operation = DESKTRONIC_OPERATION_LOWERING;
-    }
-
-    ESP_LOGE(TAG, "Moving: Finished");
-    // move_pin_->digital_write(false);
-    current_operation = DESKTRONIC_OPERATION_IDLE;
+    target_height_ = height_in_cm;
+    current_operation = must_move_up(height_in_cm) ? DESKTRONIC_OPERATION_RAISING : DESKTRONIC_OPERATION_LOWERING;
 }
 
 void Desktronic::read_remote_uart()
@@ -274,9 +247,77 @@ bool Desktronic::must_move_up(const float height_in_cm)
     return current_height_ < height_in_cm;
 }
 
+void Desktronic::move_up()
+{
+    if (move_pin_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Move pin is not configured");
+        return;
+    }
+
+    if (remote_uart_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Remote UART is not configured");
+        return;
+    }
+
+    ESP_LOGE(TAG, "Moving: Up");
+    move_pin_->digital_write(true);
+
+    remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
+
+    if (current_height_ == target_height_)
+    {
+        ESP_LOGE(TAG, "Moving: Up was finished");
+        move_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+    }
+}
+
+void Desktronic::move_down()
+{
+    if (move_pin_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Move pin is not configured");
+        return;
+    }
+
+    if (remote_uart_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Remote UART is not configured");
+        return;
+    }
+
+    ESP_LOGE(TAG, "Moving: Down");
+    move_pin_->digital_write(true);
+
+    remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
+
+    if (current_height_ == target_height_)
+    {
+        ESP_LOGE(TAG, "Moving: Down was finished");
+        move_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+    }
+}
+
 void Desktronic::loop()
 {
-    read_remote_uart();
+    switch (current_operation)
+    {
+    case DesktronicOperation::DESKTRONIC_OPERATION_IDLE:
+        read_remote_uart();
+        break;
+    case DesktronicOperation::DESKTRONIC_OPERATION_RAISING:
+        move_up();
+        break;
+    case DesktronicOperation::DESKTRONIC_OPERATION_LOWERING:
+        move_down();
+        break;
+    default:
+        break;
+    }
+
     read_desk_uart();
 }
 
@@ -284,6 +325,7 @@ void Desktronic::dump_config()
 {
     ESP_LOGCONFIG(TAG, "Desktronic Desk");
     LOG_SENSOR("", "Height", height_sensor_);
+    LOG_PIN("Move Pin: ", move_pin_);
     LOG_BINARY_SENSOR("  ", "Up", up_bsensor_);
     LOG_BINARY_SENSOR("  ", "Down", down_bsensor_);
     LOG_BINARY_SENSOR("  ", "Memory1", memory1_bsensor_);

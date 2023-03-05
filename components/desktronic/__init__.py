@@ -9,12 +9,12 @@ DEPENDENCIES = ['uart']
 AUTO_LOAD = ['sensor', 'binary_sensor']
 
 desktronic_ns = cg.esphome_ns.namespace('desktronic')
-
 Desktronic = desktronic_ns.class_('Desktronic', cg.Component)
 
 CONF_REMOTE_UART = "remote_uart"
 CONF_DESK_UART = "desk_uart"
-CONF_MOVE = "move"
+CONF_UP_PIN = "up_pin"
+CONF_DOWN_PIN = "down_pin"
 CONF_UP = "up"
 CONF_DOWN = "down"
 CONF_MEMORY1 = "memory1"
@@ -25,7 +25,8 @@ CONFIG_SCHEMA = cv.COMPONENT_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(Desktronic),
     cv.Optional(CONF_REMOTE_UART): cv.use_id(uart.UARTComponent),
     cv.Optional(CONF_DESK_UART): cv.use_id(uart.UARTComponent),
-    cv.Optional(CONF_MOVE): pins.gpio_output_pin_schema,
+    cv.Optional(CONF_UP_PIN): pins.gpio_output_pin_schema,
+    cv.Optional(CONF_DOWN_PIN): pins.gpio_output_pin_schema,
     cv.Optional(CONF_HEIGHT): sensor.sensor_schema(
         accuracy_decimals = 1
     ),
@@ -46,9 +47,12 @@ async def to_code(config):
     if CONF_DESK_UART in config:
         desk_uart = await cg.get_variable(config[CONF_DESK_UART])
         cg.add(var.set_desk_uart(desk_uart))
-    if CONF_MOVE in config:
-        pin = await cg.gpio_pin_expression(config[CONF_MOVE])
-        cg.add(var.set_move_pin(pin))
+    if CONF_UP_PIN in config:
+        pin = await cg.gpio_pin_expression(config[CONF_UP_PIN])
+        cg.add(var.set_up_pin(pin))
+    if CONF_DOWN_PIN in config:
+        pin = await cg.gpio_pin_expression(config[CONF_DOWN_PIN])
+        cg.add(var.set_down_pin(pin))
     if CONF_HEIGHT in config:
         sens = await sensor.new_sensor(config[CONF_HEIGHT])
         cg.add(var.set_height_sensor(sens))

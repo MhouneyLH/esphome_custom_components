@@ -58,6 +58,31 @@ static int segment_to_number(const uint8_t segment)
     return -1;
 }
 
+void Desktronic::setup()
+{
+    if (move_pin_ != nullptr)
+    {
+        move_pin_->digital_write(false);
+    }
+}
+
+void Desktronic::move_to(const float height_in_cm)
+{
+    if (height_in_cm < 72.0 || height_in_cm > 119.0)
+    {
+        ESP_LOGE(TAG, "Moving: Height must be between 720 and 1190 mm");
+        return;
+    }
+
+    if (move_pin_ == nullptr)
+    {
+        ESP_LOGE(TAG, "Moving: Move pin is not configured");
+        return;
+    }
+
+    ESP_LOGE(TAG, "current_height: %f cm", current_height_);
+}
+
 void Desktronic::read_remote_uart()
 {
     if (remote_uart_ == nullptr)
@@ -167,7 +192,6 @@ void Desktronic::read_desk_uart()
                 break;
             }
 
-            ESP_LOGE(TAG, "%02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
             if ((data[0] | data[1] | data[2]) == 0x00)
             {
                 break;
@@ -188,7 +212,7 @@ void Desktronic::read_desk_uart()
                 height /= 10.0;
             }
 
-            ESP_LOGE(TAG, "made it. height: %f", height);
+            current_height_ = height;
             height_sensor_->publish_state(height);
         }
 

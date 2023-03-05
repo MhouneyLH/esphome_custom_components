@@ -288,7 +288,7 @@ void Desktronic::move_up()
 
     ESP_LOGE(TAG, "Moving: Up");
     up_pin_->digital_write(true);
-    down_pin_->digital_write(true);
+    // down_pin_->digital_write(true);
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
 
@@ -296,7 +296,7 @@ void Desktronic::move_up()
     {
         ESP_LOGE(TAG, "Moving: Up was finished");
         up_pin_->digital_write(false);
-        down_pin_->digital_write(true);
+        // down_pin_->digital_write(true);
         current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
     }
 }
@@ -323,7 +323,7 @@ void Desktronic::move_down()
 
     ESP_LOGE(TAG, "Moving: Down");
     up_pin_->digital_write(true);
-    down_pin_->digital_write(false);
+    // down_pin_->digital_write(false);
 
     remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
 
@@ -331,7 +331,7 @@ void Desktronic::move_down()
     {
         ESP_LOGE(TAG, "Moving: Down was finished");
         up_pin_->digital_write(false);
-        down_pin_->digital_write(true);
+        // down_pin_->digital_write(true);
 
         current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
     }

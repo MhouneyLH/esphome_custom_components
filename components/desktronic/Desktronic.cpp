@@ -287,6 +287,15 @@ void Desktronic::move_up()
         return;
     }
 
+    if (current_height_ <= 72.0 + REMOTE_UART_STOPPING_DISTANCE || current_height_ >= 119.0 - REMOTE_UART_STOPPING_DISTANCE)
+    {
+        ESP_LOGE(TAG, "Moving Up: Height must be between 720 and 1190 mm");
+        up_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+
+        return;
+    }
+
     ESP_LOGE(TAG, "Moving: Up");
     up_pin_->digital_write(true);
     // down_pin_->digital_write(true);
@@ -320,6 +329,15 @@ void Desktronic::move_down()
     if (remote_uart_ == nullptr)
     {
         ESP_LOGE(TAG, "Moving: Remote UART is not configured");
+        return;
+    }
+
+    if (current_height_ <= 72.0 + REMOTE_UART_STOPPING_DISTANCE || current_height_ >= 119.0 - REMOTE_UART_STOPPING_DISTANCE)
+    {
+        ESP_LOGE(TAG, "Moving Down: Height must be between 720 and 1190 mm");
+        up_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+
         return;
     }
 

@@ -22,7 +22,7 @@ I can not guarantee that it works with other desk-controllers. If you have a des
 
 <p align="right">(<a href="#readme_top">back to top</a>)</p>
 
-## 💡 Usage
+## 💡 Usage (Example)
 
 You can use the custom-component e. g. with [HomeAssistant](https://www.home-assistant.io/). Just add the following lines to your `configuration.yaml`.
 
@@ -91,6 +91,12 @@ binary_sensor:
     platform: template
     lambda: return id(my_desktronic).current_operation != desktronic::DESKTRONIC_OPERATION_IDLE;
 ```
+
+### HomeAssistant UI
+
+Just add the given (by the custom-component) entities to your HomeAssistant UI:
+
+![](./assets/homeassistant_ui.gif)
 
 <p align="right">(<a href="#readme_top">back to top</a>)</p>
 

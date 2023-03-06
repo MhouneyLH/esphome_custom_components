@@ -105,7 +105,7 @@ void Desktronic::move_to(const float height_in_cm)
 {
     if (height_in_cm < MIN_HEIGHT || height_in_cm > MAX_HEIGHT)
     {
-        ESP_LOGE(TAG, "Moving: Height must be between 720 and 1190 mm");
+        ESP_LOGE(TAG, "Moving: Height must be between 72.0 and 119.0 cm");
         return;
     }
 

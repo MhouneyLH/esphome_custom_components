@@ -358,8 +358,7 @@ void Desktronic::move_to_target_height()
 
 bool Desktronic::isCurrentHeightValid() const
 {
-    return (current_height_ < MIN_HEIGHT + REMOTE_UART_STOPPING_DISTANCE) ||
-           (current_height_ > MAX_HEIGHT - REMOTE_UART_STOPPING_DISTANCE);
+    return (current_height_ >= MIN_HEIGHT) || (current_height_ <= MAX_HEIGHT);
 }
 
 bool Desktronic::isCurrentHeightInTargetBoundaries() const

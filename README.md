@@ -18,7 +18,7 @@ I can recommend the [esphome8266 d1-mini](https://www.azdelivery.de/products/d1-
 
 ## 📝 Disclaimer
 
-I can not guarantee that it works with other desk-controllers. If you have a desk-controller from desktronic and it does not work, please open an [issue]([issues_url]). Then I will try to fix it as soon as possible.
+I can not guarantee that it works with other desk-controllers. If you have a desk-controller from desktronic and it does not work, please open an [issue][issues_url]. Then I will try to fix it as soon as possible.
 
 <p align="right">(<a href="#readme_top">back to top</a>)</p>
 
@@ -122,7 +122,7 @@ Just add the given (by the custom-component) entities to your HomeAssistant UI:
 Contributions are always welcome! Please look at following commit-conventions, while contributing: https://www.conventionalcommits.org/en/v1.0.0/#summary 😃
 
 1. Fork the project.
-2. Pick or create an [issue](https://github.com/MhouneyLH/esphome_custom_components/issues) you want to work on.
+2. Pick or create an [issue][issues_url] you want to work on.
 3. Create your Feature-Branch. (`git checkout -b feat/best_feature`)
 4. Commit your changes. (`git commit -m 'feat: add some cool feature'`)
 5. Push to the branch. (`git push origin feat/best_feature`)

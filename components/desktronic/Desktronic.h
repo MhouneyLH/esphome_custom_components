@@ -41,7 +41,7 @@ enum MovingIdentifier : uint8_t
     MOVING_IDENTIFIER_MEMORY_3 = 0x08,
 };
 
-const char* desktronic_operation_to_string(const DesktronicOperation operation);
+static const char* desktronic_operation_to_string(const DesktronicOperation operation);
 static int segment_to_number(const uint8_t segment);
 
 class Desktronic : public Component
@@ -51,6 +51,7 @@ public:
     void setup() override;
     void loop() override;
     void dump_config() override;
+
     void set_remote_uart(uart::UARTComponent* uart) { remote_uart_ = uart; }
     void set_desk_uart(uart::UARTComponent* uart) { desk_uart_ = uart; }
     void set_move_pin(GPIOPin* pin) { move_pin_ = pin; }
@@ -64,17 +65,23 @@ public:
     void move_to(const float height_in_cm);
     void stop();
 
+public:
     DesktronicOperation current_operation{DesktronicOperation::DESKTRONIC_OPERATION_IDLE};
 
 private:
     void read_remote_uart();
     void read_desk_uart();
-
     void publish_remote_states(const uint8_t data);
-    bool must_move_up(const float height_in_cm);
+    void reset_remote_buffer();
+    void reset_desk_buffer();
 
+    bool must_move_up(const float height_in_cm) const;
+    void move_to_target_height();
     void move_up();
     void move_down();
+
+    bool isCurrentHeightValid() const;
+    bool isCurrentHeightInTargetBoundaries() const;
 
 protected:
     uart::UARTComponent* remote_uart_{nullptr};
@@ -89,8 +96,8 @@ protected:
 
     std::vector<uint8_t> remote_buffer_;
     std::vector<uint8_t> desk_buffer_;
-    bool remote_rx_{false};
-    bool desk_rx_{false};
+    bool is_remote_rx_uart_message_start_found{false};
+    bool is_desk_rx_uart_message_start_found{false};
     float current_height_{0.0};
     float target_height_{-1.0};
 };

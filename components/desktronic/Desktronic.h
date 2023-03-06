@@ -41,17 +41,20 @@ enum MovingIdentifier : uint8_t
     MOVING_IDENTIFIER_MEMORY_3 = 0x08,
 };
 
-const char* desktronic_operation_to_string(const DesktronicOperation operation);
+static const char* desktronic_operation_to_string(const DesktronicOperation operation);
 static int segment_to_number(const uint8_t segment);
 
 class Desktronic : public Component
 {
 public:
     float get_setup_priority() const override { return setup_priority::LATE; }
+    void setup() override;
     void loop() override;
     void dump_config() override;
-    void set_remote_uart(uart::UARTComponent* uart) { this->remote_uart_ = uart; }
-    void set_desk_uart(uart::UARTComponent* uart) { this->desk_uart_ = uart; }
+
+    void set_remote_uart(uart::UARTComponent* uart) { remote_uart_ = uart; }
+    void set_desk_uart(uart::UARTComponent* uart) { desk_uart_ = uart; }
+    void set_move_pin(GPIOPin* pin) { move_pin_ = pin; }
     void set_height_sensor(sensor::Sensor* sensor) { height_sensor_ = sensor; }
     void set_up_bsensor(binary_sensor::BinarySensor* sensor) { up_bsensor_ = sensor; }
     void set_down_bsensor(binary_sensor::BinarySensor* sensor) { down_bsensor_ = sensor; }
@@ -59,20 +62,31 @@ public:
     void set_memory2_bsensor(binary_sensor::BinarySensor* sensor) { memory2_bsensor_ = sensor; }
     void set_memory3_bsensor(binary_sensor::BinarySensor* sensor) { memory3_bsensor_ = sensor; }
 
-    void move_to(int height);
+    void move_to(const float height_in_cm);
     void stop();
 
+public:
     DesktronicOperation current_operation{DesktronicOperation::DESKTRONIC_OPERATION_IDLE};
 
 private:
     void read_remote_uart();
     void read_desk_uart();
-
     void publish_remote_states(const uint8_t data);
+    void reset_remote_buffer();
+    void reset_desk_buffer();
+
+    bool must_move_up(const float height_in_cm) const;
+    void move_to_target_height();
+    void move_up();
+    void move_down();
+
+    bool isCurrentHeightValid() const;
+    bool isCurrentHeightInTargetBoundaries() const;
 
 protected:
     uart::UARTComponent* remote_uart_{nullptr};
     uart::UARTComponent* desk_uart_{nullptr};
+    GPIOPin* move_pin_{nullptr};
     sensor::Sensor* height_sensor_{nullptr};
     binary_sensor::BinarySensor* up_bsensor_{nullptr};
     binary_sensor::BinarySensor* down_bsensor_{nullptr};
@@ -82,10 +96,10 @@ protected:
 
     std::vector<uint8_t> remote_buffer_;
     std::vector<uint8_t> desk_buffer_;
-    bool remote_rx_{false};
-    bool desk_rx_{false};
-    float current_pos_{0};
-    float target_pos_{-1};
+    bool is_remote_rx_uart_message_start_found{false};
+    bool is_desk_rx_uart_message_start_found{false};
+    float current_height_{0.0};
+    float target_height_{-1.0};
 };
 } // namespace desktronic
 } // namespace esphome

@@ -1,4 +1,5 @@
 #include "Desktronic.h"
+
 #include "esphome/core/log.h"
 
 namespace esphome
@@ -7,12 +8,21 @@ namespace desktronic
 {
 
 static const char* TAG = "desktronic";
+
 static const uint8_t REMOTE_UART_MESSAGE_LENGTH = 5U;
 static const uint8_t REMOTE_UART_MESSAGE_START = 0xa5;
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_UP = new uint8_t[5]{0xa5, 0x00, 0x20, 0xdf, 0xff};
+static const uint8_t* REMOTE_UART_MESSAGE_MOVE_DOWN = new uint8_t[5]{0xa5, 0x00, 0x40, 0xbf, 0xff};
+static const float REMOTE_UART_STOPPING_DISTANCE = 0.6;
+static const int8_t REMOTE_UART_SEND_MESSAGE_COUNT = 3;
+
 static const uint8_t DESK_UART_MESSAGE_LENGTH = 6U;
 static const uint8_t DESK_UART_MESSAGE_START = 0x5a;
 
-const char* desktronic_operation_to_string(const DesktronicOperation operation)
+static const float MIN_HEIGHT = 72.0;
+static const float MAX_HEIGHT = 119.0;
+
+static const char* desktronic_operation_to_string(const DesktronicOperation operation)
 {
     switch (operation)
     {
@@ -58,9 +68,65 @@ static int segment_to_number(const uint8_t segment)
     return -1;
 }
 
+void Desktronic::setup()
+{
+    if (move_pin_)
+    {
+        move_pin_->digital_write(false);
+    }
+}
+
+void Desktronic::loop()
+{
+    read_desk_uart();
+
+    if (current_operation == DesktronicOperation::DESKTRONIC_OPERATION_IDLE)
+    {
+        read_remote_uart();
+        return;
+    }
+
+    move_to_target_height();
+}
+
+void Desktronic::dump_config()
+{
+    ESP_LOGCONFIG(TAG, "Desktronic Desk");
+    LOG_SENSOR("", "Height", height_sensor_);
+    LOG_PIN("Up Pin: ", move_pin_);
+    LOG_BINARY_SENSOR("  ", "Up", up_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Down", down_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory1", memory1_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory2", memory2_bsensor_);
+    LOG_BINARY_SENSOR("  ", "Memory3", memory3_bsensor_);
+}
+
+void Desktronic::move_to(const float height_in_cm)
+{
+    if (height_in_cm < MIN_HEIGHT || height_in_cm > MAX_HEIGHT)
+    {
+        ESP_LOGE(TAG, "Moving: Height must be between 720 and 1190 mm");
+        return;
+    }
+
+    target_height_ = height_in_cm;
+    current_operation = must_move_up(height_in_cm) ? DESKTRONIC_OPERATION_RAISING : DESKTRONIC_OPERATION_LOWERING;
+}
+
+void Desktronic::stop()
+{
+    if (move_pin_)
+    {
+        move_pin_->digital_write(false);
+    }
+
+    target_height_ = -1.0;
+    current_operation = DESKTRONIC_OPERATION_IDLE;
+}
+
 void Desktronic::read_remote_uart()
 {
-    if (remote_uart_ == nullptr)
+    if (!remote_uart_)
     {
         return;
     }
@@ -72,14 +138,16 @@ void Desktronic::read_remote_uart()
 
         // are we at the first-message and have to filter
         // some unnecessary bytes before the actual REMOTE_UART_MESSAGE_START?
-        if (!remote_rx_)
+        if (!is_remote_rx_uart_message_start_found)
         {
             if (byte != REMOTE_UART_MESSAGE_START)
             {
                 continue;
             }
 
-            remote_rx_ = true;
+            reset_remote_buffer();
+            is_remote_rx_uart_message_start_found = true;
+
             continue;
         }
 
@@ -92,26 +160,26 @@ void Desktronic::read_remote_uart()
             continue;
         }
 
-        remote_rx_ = false;
+        is_remote_rx_uart_message_start_found = false;
         uint8_t* data = remote_buffer_.data();
 
         const uint8_t checksum = data[1] + data[2];
         if (checksum != data[3])
         {
             ESP_LOGE(TAG, "remote checksum mismatch: %02x (calculated checksum) != %02x (actual checksum)", checksum, data[3]);
-            remote_buffer_.clear();
+            reset_remote_buffer();
 
             continue;
         }
 
         publish_remote_states(data[1]);
-        remote_buffer_.clear();
+        reset_remote_buffer();
     }
 }
 
 void Desktronic::read_desk_uart()
 {
-    if (desk_uart_ == nullptr)
+    if (!desk_uart_)
     {
         return;
     }
@@ -123,17 +191,16 @@ void Desktronic::read_desk_uart()
 
         // are we at the first-message and have to filter
         // some unnecessary bytes before the actual DESK_UART_MESSAGE_START?
-        if (!desk_rx_)
+        if (!is_desk_rx_uart_message_start_found)
         {
             if (byte != DESK_UART_MESSAGE_START)
             {
                 continue;
             }
 
-            desk_buffer_.clear();
-            desk_buffer_.resize(0);
+            reset_desk_buffer();
+            is_desk_rx_uart_message_start_found = true;
 
-            desk_rx_ = true;
             continue;
         }
 
@@ -146,20 +213,19 @@ void Desktronic::read_desk_uart()
             continue;
         }
 
-        desk_rx_ = false;
+        is_desk_rx_uart_message_start_found = false;
         uint8_t* data = desk_buffer_.data();
 
         const uint8_t checksum = data[0] + data[1] + data[2] + data[3];
         if (checksum != data[4])
         {
-            ESP_LOGE(TAG, "desk checksum mismatch: %02x != %02x", checksum, data[4]);
-            desk_buffer_.clear();
-            desk_buffer_.resize(0);
+            ESP_LOGE(TAG, "desk checksum mismatch: %02x (calculated checksum) != %02x (actual checksum)", checksum, data[4]);
+            reset_desk_buffer();
 
             continue;
         }
 
-        if (height_sensor_ != nullptr)
+        if (height_sensor_)
         {
             if (data[3] != 0x01)
             {
@@ -167,7 +233,6 @@ void Desktronic::read_desk_uart()
                 break;
             }
 
-            ESP_LOGE(TAG, "%02x %02x %02x %02x %02x", data[0], data[1], data[2], data[3], data[4]);
             if ((data[0] | data[1] | data[2]) == 0x00)
             {
                 break;
@@ -188,54 +253,118 @@ void Desktronic::read_desk_uart()
                 height /= 10.0;
             }
 
-            ESP_LOGE(TAG, "made it. height: %f", height);
+            current_height_ = height;
             height_sensor_->publish_state(height);
         }
 
-        desk_buffer_.clear();
-        desk_buffer_.resize(0);
+        reset_desk_buffer();
     }
 }
 
 void Desktronic::publish_remote_states(const uint8_t data)
 {
-    if (up_bsensor_ != nullptr)
+    if (up_bsensor_)
     {
         up_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_UP);
     }
-    if (down_bsensor_ != nullptr)
+    if (down_bsensor_)
     {
         down_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_DOWN);
     }
-    if (memory1_bsensor_ != nullptr)
+    if (memory1_bsensor_)
     {
         memory1_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_1);
     }
-    if (memory2_bsensor_ != nullptr)
+    if (memory2_bsensor_)
     {
         memory2_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_2);
     }
-    if (memory3_bsensor_ != nullptr)
+    if (memory3_bsensor_)
     {
         memory3_bsensor_->publish_state(data & MovingIdentifier::MOVING_IDENTIFIER_MEMORY_3);
     }
 }
 
-void Desktronic::loop()
+void Desktronic::reset_remote_buffer()
 {
-    read_remote_uart();
-    read_desk_uart();
+    remote_buffer_.clear();
+    remote_buffer_.resize(0);
 }
 
-void Desktronic::dump_config()
+void Desktronic::reset_desk_buffer()
 {
-    ESP_LOGCONFIG(TAG, "Desktronic Desk");
-    LOG_SENSOR("", "Height", height_sensor_);
-    LOG_BINARY_SENSOR("  ", "Up", up_bsensor_);
-    LOG_BINARY_SENSOR("  ", "Down", down_bsensor_);
-    LOG_BINARY_SENSOR("  ", "Memory1", memory1_bsensor_);
-    LOG_BINARY_SENSOR("  ", "Memory2", memory2_bsensor_);
-    LOG_BINARY_SENSOR("  ", "Memory3", memory3_bsensor_);
+    desk_buffer_.clear();
+    desk_buffer_.resize(0);
+}
+
+bool Desktronic::must_move_up(const float height_in_cm) const
+{
+    return current_height_ < height_in_cm;
+}
+
+void Desktronic::move_to_target_height()
+{
+    if (!move_pin_)
+    {
+        ESP_LOGE(TAG, "Moving: Move pin is not configured");
+        return;
+    }
+
+    if (!remote_uart_)
+    {
+        ESP_LOGE(TAG, "Moving: Remote UART is not configured");
+        return;
+    }
+
+    if (!isCurrentHeightValid())
+    {
+        ESP_LOGE(TAG, "Moving: Height must be between 72.0 and 119.0 cm");
+        move_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+
+        return;
+    }
+
+    move_pin_->digital_write(true);
+    switch (current_operation)
+    {
+    case DesktronicOperation::DESKTRONIC_OPERATION_RAISING:
+        ESP_LOGE(TAG, "Moving: Up");
+        for (int i = 0; i < REMOTE_UART_SEND_MESSAGE_COUNT; i++)
+        {
+            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_UP, REMOTE_UART_MESSAGE_LENGTH);
+        }
+
+        break;
+    case DesktronicOperation::DESKTRONIC_OPERATION_LOWERING:
+        ESP_LOGE(TAG, "Moving: Down");
+        for (int i = 0; i < REMOTE_UART_SEND_MESSAGE_COUNT; i++)
+        {
+            remote_uart_->write_array(REMOTE_UART_MESSAGE_MOVE_DOWN, REMOTE_UART_MESSAGE_LENGTH);
+        }
+
+        break;
+    default:
+        return;
+    }
+
+    if (isCurrentHeightInTargetBoundaries())
+    {
+        ESP_LOGE(TAG, "Moving: Finished");
+        move_pin_->digital_write(false);
+        current_operation = DesktronicOperation::DESKTRONIC_OPERATION_IDLE;
+    }
+}
+
+bool Desktronic::isCurrentHeightValid() const
+{
+    return (current_height_ >= MIN_HEIGHT) || (current_height_ <= MAX_HEIGHT);
+}
+
+bool Desktronic::isCurrentHeightInTargetBoundaries() const
+{
+    return (current_height_ >= target_height_ - REMOTE_UART_STOPPING_DISTANCE) &&
+           (current_height_ <= target_height_ + REMOTE_UART_STOPPING_DISTANCE);
 }
 
 } // namespace desktronic

@@ -53,8 +53,7 @@ public:
     void dump_config() override;
     void set_remote_uart(uart::UARTComponent* uart) { remote_uart_ = uart; }
     void set_desk_uart(uart::UARTComponent* uart) { desk_uart_ = uart; }
-    void set_up_pin(GPIOPin* pin) { up_pin_ = pin; }
-    void set_down_pin(GPIOPin* pin) { down_pin_ = pin; }
+    void set_move_pin(GPIOPin* pin) { move_pin_ = pin; }
     void set_height_sensor(sensor::Sensor* sensor) { height_sensor_ = sensor; }
     void set_up_bsensor(binary_sensor::BinarySensor* sensor) { up_bsensor_ = sensor; }
     void set_down_bsensor(binary_sensor::BinarySensor* sensor) { down_bsensor_ = sensor; }
@@ -80,8 +79,7 @@ private:
 protected:
     uart::UARTComponent* remote_uart_{nullptr};
     uart::UARTComponent* desk_uart_{nullptr};
-    GPIOPin* up_pin_{nullptr};
-    GPIOPin* down_pin_{nullptr};
+    GPIOPin* move_pin_{nullptr};
     sensor::Sensor* height_sensor_{nullptr};
     binary_sensor::BinarySensor* up_bsensor_{nullptr};
     binary_sensor::BinarySensor* down_bsensor_{nullptr};

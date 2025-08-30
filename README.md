@@ -14,11 +14,14 @@ This is an esphome-custom-component for the [desktronic](https://desktronic.de/)
 
 I can recommend the [esphome8266 d1-mini](https://www.azdelivery.de/products/d1-mini). It has enough flash-memory and is easy to use.
 
-Special thanks to [@SynapsenPassi](https://github.com/SynapsenPassi)! He was a silent contributor along the project and helped especially helped me reverse-engineering the proprietary protocol.
+Special thanks to [@SynapsenPassi](https://github.com/SynapsenPassi)! He was a silent contributor along the project and especially helped me reverse-engineering the proprietary protocol.
 
 <p align="right">(<a href="#readme_top">back to top</a>)</p>
 
 ## 📝 Disclaimer
+
+> [!WARNING]
+> The electronic components of the desk can break! Be careful when wiring and testing. Always double-check your connections before powering on!
 
 I can not guarantee that it works with other desk-controllers. If you have a desk-controller from desktronic and it does not work, please open an [issue][issues_url]. Then I will try to fix it as soon as possible.
 

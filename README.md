@@ -14,6 +14,8 @@ This is an esphome-custom-component for the [desktronic](https://desktronic.de/)
 
 I can recommend the [esphome8266 d1-mini](https://www.azdelivery.de/products/d1-mini). It has enough flash-memory and is easy to use.
 
+Special thanks to [@SynapsenPassi](https://github.com/SynapsenPassi)! He was a silent contributor along the project and helped especially helped me reverse-engineering the proprietary protocol.
+
 <p align="right">(<a href="#readme_top">back to top</a>)</p>
 
 ## 📝 Disclaimer
